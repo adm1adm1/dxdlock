@@ -1,334 +1,964 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title></title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deadlock — Найди мейна</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
 
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:wght@400;600&display=swap" rel="stylesheet">
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    <!-- Font Awesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0a0f;
+      color: #e0e0e0;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
 
-    <link rel="stylesheet" href="phoenix-pro.css">
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(120, 40, 200, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(255, 100, 50, 0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 80%, rgba(0, 200, 150, 0.05) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 40px 20px 80px;
+    }
+
+    /* ═══ ШАПКА ═══ */
+    .header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .header h1 {
+      font-size: 2.4rem;
+      font-weight: 900;
+      letter-spacing: -1px;
+      background: linear-gradient(135deg, #ff6a3d, #f5c542, #ff6a3d);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shimmer 3s ease-in-out infinite;
+    }
+
+    @keyframes shimmer {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    .header p {
+      margin-top: 12px;
+      color: #888;
+      font-size: 0.95rem;
+    }
+
+    /* ═══ ПРОГРЕСС ═══ */
+    .progress-wrap { margin-bottom: 36px; }
+
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 4px;
+      background: #1a1a2e;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #ff6a3d, #f5c542);
+      border-radius: 2px;
+      transition: width 0.4s ease;
+    }
+
+    /* ═══ КАРТОЧКА ВОПРОСА ═══ */
+    .question-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      padding: 36px 32px;
+      margin-bottom: 24px;
+      backdrop-filter: blur(10px);
+    }
+
+    .question-number {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #ff6a3d;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+    }
+
+    .question-text {
+      font-size: 1.15rem;
+      font-weight: 600;
+      line-height: 1.5;
+      margin-bottom: 28px;
+    }
+
+    /* ═══ ШКАЛА С ПОДПИСЯМИ ═══ */
+    .scale-container {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+    }
+
+    .scale-option {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      max-width: 140px;
+      cursor: pointer;
+    }
+
+    .scale-option-btn {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      border: 2px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.03);
+      color: #ccc;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+
+    .scale-option:hover .scale-option-btn {
+      border-color: rgba(255,106,61,0.5);
+      background: rgba(255,106,61,0.1);
+      color: #fff;
+      transform: translateY(-2px);
+    }
+
+    .scale-option.selected .scale-option-btn {
+      border-color: #ff6a3d;
+      background: rgba(255,106,61,0.2);
+      color: #ff6a3d;
+      box-shadow: 0 0 20px rgba(255,106,61,0.15);
+    }
+
+    .scale-option-label {
+      font-size: 0.68rem;
+      color: #666;
+      text-align: center;
+      line-height: 1.3;
+      min-height: 32px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    .scale-option.selected .scale-option-label {
+      color: #ff6a3d;
+    }
+
+    .scale-option:hover .scale-option-label {
+      color: #aaa;
+    }
+
+    /* ═══ НАВИГАЦИЯ ═══ */
+    .nav-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+      justify-content: center;
+    }
+
+    .btn {
+      padding: 14px 32px;
+      border-radius: 12px;
+      border: none;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .btn-back {
+      background: rgba(255,255,255,0.06);
+      color: #999;
+    }
+    .btn-back:hover:not(:disabled) {
+      background: rgba(255,255,255,0.1);
+      color: #ccc;
+    }
+
+    .btn-next {
+      background: linear-gradient(135deg, #ff6a3d, #e8552e);
+      color: #fff;
+    }
+    .btn-next:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px rgba(255,106,61,0.3);
+    }
+    .btn-next:disabled { background: #333; color: #666; }
+
+    /* ═══ РЕЗУЛЬТАТЫ ═══ */
+    #results { display: none; }
+
+    .results-title {
+      text-align: center;
+      font-size: 1.6rem;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+
+    .results-subtitle {
+      text-align: center;
+      color: #777;
+      margin-bottom: 36px;
+      font-size: 0.9rem;
+    }
+
+    .profile-section {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 28px;
+    }
+
+    .profile-section h3 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #888;
+      margin-bottom: 20px;
+    }
+
+    .profile-axis {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+      gap: 12px;
+    }
+
+    .axis-name {
+      width: 100px;
+      font-size: 0.78rem;
+      color: #999;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .axis-bar-bg {
+      flex: 1;
+      height: 8px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .axis-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #ff6a3d, #f5c542);
+      transition: width 0.6s ease;
+    }
+
+    .axis-value {
+      width: 32px;
+      font-size: 0.78rem;
+      color: #aaa;
+      flex-shrink: 0;
+    }
+
+    .hero-card {
+      display: flex;
+      align-items: center;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 14px;
+      padding: 20px 24px;
+      margin-bottom: 12px;
+    }
+
+    .hero-card:first-child {
+      border-color: rgba(255,106,61,0.3);
+      background: rgba(255,106,61,0.05);
+    }
+
+    .hero-rank {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: #333;
+      width: 48px;
+      flex-shrink: 0;
+    }
+
+    .hero-card:first-child .hero-rank { color: #ff6a3d; }
+
+    .hero-info { flex: 1; }
+
+    .hero-name {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .hero-match-bar-bg {
+      height: 6px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .hero-match-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, #ff6a3d, #f5c542);
+      transition: width 0.8s ease;
+    }
+
+    .hero-pct {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #777;
+      width: 70px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .hero-card:first-child .hero-pct { color: #ff6a3d; }
+
+    .worst-section { margin-top: 28px; }
+
+    .worst-section h3 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #555;
+      margin-bottom: 14px;
+    }
+
+    .worst-hero {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      font-size: 0.85rem;
+      color: #555;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+
+    .feedback-section {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      padding: 28px;
+      margin-top: 36px;
+      text-align: center;
+    }
+
+    .feedback-section h3 { font-size: 1rem; margin-bottom: 16px; }
+
+    .feedback-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .fb-btn {
+      padding: 10px 28px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.04);
+      color: #ccc;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .fb-btn:hover { border-color: #ff6a3d; background: rgba(255,106,61,0.1); }
+    .fb-btn.active { border-color: #ff6a3d; background: rgba(255,106,61,0.15); color: #ff6a3d; }
+
+    .real-main-select { margin-top: 16px; }
+    .real-main-select label { display: block; font-size: 0.85rem; color: #888; margin-bottom: 8px; }
+
+    .real-main-select select {
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: #111;
+      color: #e0e0e0;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+      width: 220px;
+      cursor: pointer;
+    }
+
+    .restart-btn {
+      display: inline-block;
+      margin-top: 40px;
+      padding: 14px 40px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: transparent;
+      color: #888;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .restart-btn:hover { border-color: #ff6a3d; color: #ff6a3d; }
+
+    @media (max-width: 580px) {
+      .header h1 { font-size: 1.7rem; }
+      .question-card { padding: 24px 16px; }
+      .scale-option-btn { width: 44px; height: 44px; font-size: 0.95rem; }
+      .scale-option-label { font-size: 0.6rem; }
+      .scale-container { gap: 4px; }
+      .hero-card { padding: 14px 16px; }
+    }
+  </style>
 </head>
 <body>
-    <!-- Progress Indicator -->
-    <div class="progress-container phcode-no-lp-edit ">
-        <div class="progress-indicator">
-            <div class="progress-dot" data-section="2">
-                <span class="dot-number">1</span>
-            </div>
-            <div class="progress-line"></div>
-            <div class="progress-dot" data-section="3">
-                <span class="dot-number">2</span>
-            </div>
-            <div class="progress-line"></div>
-            <div class="progress-dot" data-section="4">
-                <span class="dot-number">3</span>
-            </div>
-            <div class="progress-line"></div>
-            <div class="progress-dot" data-section="5">
-                <span class="dot-number">4</span>
-            </div>
-            <div class="progress-line"></div>
-            <div class="progress-dot" data-section="6">
-                <span class="dot-number">5</span>
-            </div>
-        </div>
+
+<div class="container">
+  <div class="header">
+    <h1>DEADLOCK — НАЙДИ МЕЙНА</h1>
+    <p>18 вопросов · 3 минуты · честный результат</p>
+  </div>
+
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-info">
+      <span id="progressLabel">Вопрос 1 из 18</span>
+      <span id="progressPct">0%</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div id="quizArea"></div>
+
+  <div class="nav-buttons" id="navButtons">
+    <button class="btn btn-back" id="btnBack" disabled onclick="goBack()">← Назад</button>
+    <button class="btn btn-next" id="btnNext" disabled onclick="goNext()">Далее →</button>
+  </div>
+
+  <div id="results">
+    <div class="results-title">Твой результат</div>
+    <div class="results-subtitle">На основе 10 осей игрового профиля</div>
+
+    <div class="profile-section">
+      <h3>Твой профиль</h3>
+      <div id="profileBars"></div>
     </div>
 
-    <!-- Main Container -->
-    <main class="game-container phcode-no-lp-edit-this">
-        <!-- Section 1: What is Live Preview Editing -->
-        <div class="paper-card section active phcode-no-lp-edit" id="section-1" data-section="1" style="display: none;">
-            <div class="section-header ">
-                <h2 class="section-title">Редактирование в реальном времени</h2>
-                <p class="section-subtitle">Редактируйте свою страницу визуально -&nbsp; <b>Ваш HTML обновляется мгновенно</b></p>
-            </div>
+    <div id="heroCards"></div>
 
-            <div class="features-grid">
-                <div class="feature-item">
-                    <img src="images/editText.png" alt="Edit Text">
-                </div>
-                <div class="feature-item">
-                    <img src="images/imageLib.svg" alt="Image Library">
-                </div>
-                <div class="feature-item">
-                    <img src="images/drahNDrop.png" alt="Drag and Drop">
-                </div>
-                <div class="feature-item">
-                    <img src="images/layoutRulers.png" alt="Layout Rulers">
-                </div>
-            </div>
-
-            <div class="get-started-container phcode-no-lp-edit phcode-dismiss-lp-edit">
-                <button class="get-started-button" id="get-started-button">
-                    <span>Начать</span>
-                    <i class="fas fa-arrow-right"></i>
-                </button>
-            </div>
-        </div>
-
-        <!-- Section 2: Live Preview Edit -->
-        <div class="paper-card section phcode-no-lp-edit-this" id="section-2" data-section="2">
-            <div class="section-header phcode-no-lp-edit">
-                <h2 class="section-title">Редактирование текста</h2>
-                <p class="section-subtitle">Дважды щелкните, чтобы отредактировать текст ниже и добавить свое имя</p>
-            </div>
-
-            <div class="playground phcode-no-lp-edit-this">
-                <div class="editable-container">
-                    <span id="editable-name" class="editable-text">Привет, ___</span>
-                </div>
-            </div>
-
-            <div class="success-message phcode-no-lp-edit" id="success-message">
-                <span class="success-icon">←</span>
-                <p id="success-message-text">Ваша правка обновила код — отменить: <span id="undo-shortcut"></span>, повторить: <span id="redo-shortcut"></span>.</p>
-            </div>
-
-            <div class="slide-controls phcode-no-lp-edit"></div>
-
-            <div class="hint-content-inline phcode-no-lp-edit" data-section="2">
-                <p style="margin-bottom: 12px; font-weight: 600; color: var(--text-primary);">Чтобы выполнить это задание:</p>
-                <ol>
-                    <li>Дважды щелкните по тексту «Привет, ___»</li>
-                    <li>Замените подчеркивания на свое имя</li>
-                    <li>Нажмите Enter или щёлкните за пределами области, чтобы применить изменения</li>
-                </ol>
-            </div>
-        </div>
-
-        <!-- Section 3: Change Images Live -->
-        <div class="paper-card section phcode-no-lp-edit-this" id="section-3" data-section="3">
-            <div class="section-header phcode-no-lp-edit">
-                <h2 class="section-title">Изменяйте изображения в реальном времени</h2>
-                <p class="section-subtitle">Щёлкните по изображению ниже, чтобы заменить его на понравившееся из Библиотеки изображений.</p>
-            </div>
-
-            <div class="playground phcode-no-lp-edit-this">
-                <div class="image-container phcode-no-lp-edit-this">
-                    <img id="replaceable-image" src="images/placeholder.svg" alt="Replaceable image" class="replaceable-image">
-                </div>
-            </div>
-
-            <div class="success-message phcode-no-lp-edit" id="success-message-section3">
-                <p id="success-message-text-section3-url" style="display: none;">Знаете ли вы, что можете скачивать изображения с помощью кнопки «Скачать» <img src="images/download.svg" alt="Скачать" class="inline-icon"> в Библиотеке изображений?</p>
-                <p id="success-message-text-section3-local" style="display: none;">Знаете ли вы, что можно щёлкнуть по изображению, чтобы использовать его, не скачивая?</p>
-            </div>
-
-            <div class="slide-controls phcode-no-lp-edit"></div>
-
-            <div class="hint-content-inline phcode-no-lp-edit" data-section="3">
-                <p style="margin-bottom: 12px; font-weight: 600; color: var(--text-primary);">Чтобы выполнить это задание:</p>
-                <ul>
-                    <li>Нажмите на изображение, чтобы открыть Библиотеку изображений (переключается значком <img src="images/image.svg" alt="Image" class="inline-icon"> на панели инструментов или двойным щелчком).</li>
-                    <li>В Библиотеке изображений: наведите курсор на миниатюры, чтобы просмотреть их</li>
-                    <li>Щёлкните по миниатюре, чтобы разместить её на своей странице, или щёлкните по значку <img src="images/download.svg" alt="Скачать" class="inline-icon">, чтобы сначала скачать её</li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- Section 4: Edit Elements Visually -->
-        <div class="paper-card section phcode-no-lp-edit-this" id="section-4" data-section="4">
-            <div class="section-header phcode-no-lp-edit">
-                <h2 class="section-title">Редактируйте элементы визуально</h2>
-                <p class="section-subtitle">Дублируйте<img src="images/duplicate.svg" alt="Дублировать" class="inline-icon"> карточку ниже, чтобы всего получилось <strong>3 карточки</strong>, затем <strong>удалите<img src="images/trash.svg" alt="Удалить" class="inline-icon"> 1 карточку</strong>.</p>
-            </div>
-
-            <div class="progress-toast phcode-no-lp-edit" id="progress-toast-section4">
-                <p id="progress-toast-text-section4">
-                    <span id="card-count-status">1/3 cards</span>,
-                    <span id="delete-count-status">0/1 deleted</span>
-                </p>
-            </div>
-
-            <div class="undo-message phcode-no-lp-edit" id="undo-message-section4">
-                <span class="warning-icon">⚠️</span>
-                <p>Упс! Все карточки удалены. Нажмите <strong><span id="undo-shortcut-section4"></span></strong>, чтобы отменить.</p>
-            </div>
-
-            <div class="playground phcode-no-lp-edit-this">
-                <div class="cards-container phcode-no-lp-edit-this">
-                    <div class="demo-card">
-                        <img src="images/placeholder.svg" alt="Изображение карточки" class="card-image">
-                        <h3 class="card-title">Карточка</h3>
-                        <p class="card-text">Нажмите значок <img src="images/arrowUp.svg" alt="Up" class="inline-icon">&nbsp;на панели инструментов выше, чтобы выбрать родительскую карточку.</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="success-message phcode-no-lp-edit" id="success-message-section4">
-                <span class="success-icon">✓</span>
-                <p id="success-message-text-section4">Отлично! Вы освоили дублирование и удаление элементов.</p>
-            </div>
-
-            <div class="slide-controls phcode-no-lp-edit"></div>
-
-            <div class="hint-content-inline phcode-no-lp-edit" data-section="4">
-                <p style="margin-bottom: 12px; font-weight: 600; color: var(--text-primary);">Чтобы выполнить это задание:</p>
-                <ol style="margin: 0 0 0 20px; padding: 0;">
-                    <li style="margin-bottom: 8px; color: var(--text-primary);">Нажмите на карточку, чтобы выделить её.</li>
-                    <li style="margin-bottom: 8px; color: var(--text-primary);">Используйте кнопку <img src="images/duplicate.svg" alt="Duplicate" class="inline-icon"> или нажмите <strong><span id="duplicate-shortcut"></span></strong>, чтобы дублировать карточки, пока их не станет 3.</li>
-                    <li style="margin-bottom: 8px; color: var(--text-primary);">Выделите любую карточку и используйте кнопку <img src="images/trash.svg" alt="Delete" class="inline-icon"> или нажмите <strong>Delete</strong>, чтобы удалить её.</li>
-                    <li style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;">Подсказка: Отменить действие можно с помощью <strong><span id="undo-shortcut-hint"></span></strong>, а повторить — с помощью <strong><span id="redo-shortcut-hint"></span></strong>.</li>
-                </ol>
-            </div>
-        </div>
-
-        <!-- Section 5: Reorder Elements -->
-        <div class="paper-card section phcode-no-lp-edit-this" id="section-5" data-section="5">
-            <div class="section-header phcode-no-lp-edit">
-                <h2 class="section-title">Изменение порядка элементов перетаскиванием</h2>
-                <p class="section-subtitle">Перетащите любую заметку, чтобы изменить порядок.</p>
-            </div>
-
-            <div class="playground phcode-no-lp-edit-this">
-                <div class="notes-container phcode-no-lp-edit-this">
-                    <div class="sticky-note">Второе место</div>
-                    <div class="sticky-note">Первое место</div>
-                    <div class="sticky-note">Третье место</div>
-                </div>
-            </div>
-
-            <div class="success-message phcode-no-lp-edit" id="success-message-section5">
-                <span class="success-icon">✓</span>
-                <p id="success-message-text-section5">Вы можете перетаскивать элементы в любое место на странице, чтобы менять их порядок.</p>
-            </div>
-
-            <div class="slide-controls phcode-no-lp-edit"></div>
-
-            <div class="hint-content-inline phcode-no-lp-edit" data-section="5">
-                <p style="margin-bottom: 12px; font-weight: 600; color: var(--text-primary);">Чтобы выполнить это задание:</p>
-                <ol style="margin: 0 0 0 20px; padding: 0;">
-                    <li style="margin-bottom: 8px; color: var(--text-primary);">Нажмите и удерживайте любую заметку, чтобы начать перетаскивание</li>
-                    <li style="margin-bottom: 8px; color: var(--text-primary);">Переместите её вверх или вниз, чтобы изменить порядок</li>
-                    <li style="margin-bottom: 8px; color: var(--text-primary);">Отпустите, чтобы поместить её на новое место</li>
-                </ol>
-            </div>
-        </div>
-
-        <!-- Section 6: Edit Links & Preview Mode (Final Slide) -->
-        <div class="paper-card section phcode-no-lp-edit-this" id="section-6" data-section="6">
-            <div class="section-header phcode-no-lp-edit">
-                <h2 class="section-title">Редактирование ссылок и предпросмотр страницы</h2>
-                <p class="section-subtitle">Выберите значок <img src="images/link.svg" alt="Link" class="inline-icon"> на панели инструментов, чтобы изменить адрес этой ссылки.</p>
-            </div>
-
-            <div class="playground phcode-no-lp-edit-this">
-                <div class="link-demo-container phcode-no-lp-edit-this">
-                    <p class="link-demo-text"><a id="editable-link" href="https://docs.phcode.dev/app-links/live-preview-edit" class="demo-link" target="_blank">Редактировать ссылку</a></p>
-                </div>
-            </div>
-
-            <div class="success-message phcode-no-lp-edit" id="success-message-section6">
-                <span class="success-icon">✓</span>
-                <p id="success-message-text-section6">Вы отредактировали ссылку.</p>
-            </div>
-
-            <div class="mode-explanation phcode-no-lp-edit">
-                <h3 class="mode-title">Режим редактирования и режим предпросмотра</h3>
-                <div class="mode-cards" id="mode-cards-hover">
-                    <div class="mode-card edit-mode-card">
-                        <div class="mode-icon"><i class="fas fa-edit"></i></div>
-                        <div class="mode-info">
-                            <strong>Режим редактирования</strong>
-                            <p>Выбирайте и изменяйте элементы на странице</p>
-                        </div>
-                    </div>
-                    <div class="mode-card preview-mode-card">
-                        <div class="mode-icon"><img src="images/playButton.svg" alt="Воспроизвести" class="mode-icon-svg svg-gold"></div>
-                        <div class="mode-info">
-                            <strong>Режим предпросмотра</strong>
-                            <p>Посмотрите, как вашу страницу увидят посетители</p>
-                        </div>
-                    </div>
-                </div>
-                <p class="mode-hint">Нажмите <strong>F8</strong> или кнопки <span class="play-button-hint"><img src="images/playButton.svg" alt="Play" class="play-hint-svg svg-gold"></span> для переключения режимов.</p>
-            </div>
-
-            <div class="slide-controls phcode-no-lp-edit"></div>
-
-            <div class="hint-content-inline phcode-no-lp-edit" data-section="6">
-                <p style="margin-bottom: 12px; font-weight: 600; color: var(--text-primary);">Советы:</p>
-                <ul style="margin: 0 0 0 20px; padding: 0; list-style-type: disc;">
-                    <li style="margin-bottom: 8px; color: var(--text-primary);">Нажмите на любую ссылку, чтобы выбрать её для редактирования.</li>
-                    <li style="margin-bottom: 8px; color: var(--text-primary);">Включите опцию <strong>«Открыть в новой вкладке»</strong>, чтобы ссылки открывались на отдельной странице.</li>
-                    <li style="margin-bottom: 0; color: var(--text-primary);">Переключитесь в режим предпросмотра (<strong>F8</strong>), чтобы проверить ссылки и взаимодействия</li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- Section 7: Completion Slide -->
-        <div class="paper-card section completion-slide phcode-no-lp-edit-this" id="section-7" data-section="7">
-            <div class="completion-content phcode-no-lp-edit">
-                <div class="completion-icon">
-                    <img src="images/rocket.svg" alt="Ракета" class="completion-icon-svg svg-orange">
-                </div>
-                <h2 class="completion-title">Вы готовы к работе!</h2>
-                <p class="completion-body">Вы научились редактировать в режиме живого предпросмотра.<br>Откройте папку с вашими HTML-файлами, чтобы начать редактирование.</p>
-
-                <p class="completion-helper">Нужна помощь?</p>
-
-                <div class="resource-links">
-                    <a href="https://www.youtube.com/@phoenixcodeeditor3764" target="_blank" class="resource-link">
-                        <i class="fab fa-youtube"></i>
-                        <span>Ютуб</span>
-                    </a>
-                    <a href="https://docs.phcode.dev/app-links/live-preview-edit" target="_blank" class="resource-link">
-                        <i class="fas fa-book"></i>
-                        <span>Документация</span>
-                    </a>
-                </div>
-            </div>
-
-            <div class="slide-controls phcode-no-lp-edit"></div>
-        </div>
-
-        <!-- Section 8: Bonus - Check Layout with Measurements -->
-        <div class="paper-card section bonus-slide phcode-no-lp-edit-this" id="section-8" data-section="8">
-            <div class="section-header phcode-no-lp-edit">
-                <span class="bonus-badge">И ещё кое-что</span>
-                <h2 class="section-title">Проверка макета с помощью измерений</h2>
-                <p class="section-subtitle">Нажмите <img src="images/verticalEllipsis.svg" alt="menu" class="inline-icon"> на панели инструментов и выберите <strong>Показать размеры</strong>, чтобы увидеть, какой блок смещён.</p>
-            </div>
-
-            <div class="playground phcode-no-lp-edit-this">
-                <div class="alignment-demo phcode-no-lp-edit-this">
-                    <div class="align-box" id="align-box-1"><span class="phcode-no-lp-edit">Нажмите <img src="images/verticalEllipsis.svg" alt="menu" class="inline-icon"></span></div>
-                    <div class="align-box misaligned"><span>Блок</span></div>
-                    <div class="align-box"><span>Блок</span></div>
-                </div>
-            </div>
-
-            <div class="slide-controls phcode-no-lp-edit"></div>
-
-            <div class="hint-content-inline phcode-no-lp-edit" data-section="8">
-                <p style="margin-bottom: 12px; font-weight: 600; color: var(--text-primary);">Советы:</p>
-                <ul style="margin: 0 0 0 20px; padding: 0; list-style-type: disc;">
-                    <li style="margin-bottom: 8px; color: var(--text-primary);">Нажмите значок <img src="images/verticalEllipsis.svg" alt="More options" class="inline-icon"> на панели инструментов или щёлкните правой кнопкой мыши, чтобы открыть меню</li>
-                    <li style="margin-bottom: 8px; color: var(--text-primary);">Включите <strong>Показать измерения</strong>, чтобы увидеть направляющие для интервалов и выравнивания</li>
-                    <li style="margin-bottom: 8px; color: var(--text-primary);">Измерения помогают быстро обнаруживать проблемы с выравниванием</li>
-                </ul>
-            </div>
-        </div>
-    </main>
-
-    <!-- Confetti Container for Celebrations -->
-    <div class="confetti-container phcode-no-lp-edit" id="confetti-container"></div>
-
-    <!-- Play Button Arrows (shown on section 6 hover) -->
-    <div class="arrow-pointer arrow-left" id="arrow-left">
-        <img src="images/arrowUp.svg" alt="Стрелка" class="arrow-svg svg-gold">
-    </div>
-    <div class="arrow-pointer arrow-center" id="arrow-center">
-        <img src="images/arrowUp.svg" alt="Стрелка" class="arrow-svg svg-gold">
+    <div class="worst-section">
+      <h3>Наименее подходящие</h3>
+      <div id="worstHeroes"></div>
     </div>
 
-    <script src="phoenix-pro.js"></script>
+    <div class="feedback-section">
+      <h3>Согласен с результатом?</h3>
+      <div class="feedback-buttons">
+        <button class="fb-btn" onclick="setFeedback(this, true)">👍 Да</button>
+        <button class="fb-btn" onclick="setFeedback(this, false)">👎 Нет</button>
+      </div>
+      <div class="real-main-select">
+        <label>Кто на самом деле твой мейн?</label>
+        <select id="realMainSelect">
+          <option value="">— выбери —</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="text-align:center">
+      <button class="restart-btn" onclick="restart()">Пройти заново</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// ГЕРОИ — ЛЕГКО РЕДАКТИРОВАТЬ
+// ═══════════════════════════════════════════════════════════
+//
+// Формат: Имя: { range, aggr, compl, team, tank, mobil, burst, front, roam, flash }
+// Все значения от 1 до 5
+//
+// Чтобы добавить героя — добавь объект
+// Чтобы изменить — поменяй число
+// Чтобы удалить — удали строку
+
+const HERO_DATA = [
+  // Имя            Range Aggr Compl Team Tank Mobil Burst Front Roam Flash
+  { name: "Abrams",       range:1, aggr:5, compl:1, team:2, tank:5, mobil:4, burst:2, front:5, roam:4, flash:2 },
+  { name: "Bebop",        range:3, aggr:3, compl:4, team:4, tank:4, mobil:3, burst:4, front:3, roam:3, flash:5 },
+  { name: "Dynamo",       range:2, aggr:3, compl:2, team:5, tank:4, mobil:2, burst:3, front:4, roam:2, flash:3 },
+  { name: "Grey Talon",   range:5, aggr:2, compl:3, team:2, tank:1, mobil:3, burst:3, front:1, roam:2, flash:2 },
+  { name: "Haze",         range:3, aggr:3, compl:3, team:1, tank:1, mobil:3, burst:4, front:3, roam:3, flash:3 },
+  { name: "Infernus",     range:2, aggr:4, compl:2, team:2, tank:3, mobil:3, burst:1, front:4, roam:3, flash:2 },
+  { name: "Ivy",          range:4, aggr:2, compl:3, team:5, tank:2, mobil:5, burst:2, front:2, roam:3, flash:3 },
+  { name: "Kelvin",       range:2, aggr:3, compl:3, team:4, tank:5, mobil:3, burst:2, front:5, roam:3, flash:3 },
+  { name: "Lady Geist",   range:3, aggr:3, compl:3, team:2, tank:3, mobil:2, burst:3, front:3, roam:2, flash:2 },
+  { name: "Lash",         range:2, aggr:5, compl:5, team:2, tank:2, mobil:5, burst:5, front:4, roam:5, flash:5 },
+  { name: "McGinnis",     range:4, aggr:1, compl:2, team:3, tank:3, mobil:1, burst:1, front:2, roam:1, flash:1 },
+  { name: "Mirage",       range:3, aggr:3, compl:4, team:2, tank:2, mobil:3, burst:4, front:3, roam:3, flash:4 },
+  { name: "Mo & Krill",   range:1, aggr:5, compl:2, team:2, tank:5, mobil:3, burst:2, front:5, roam:4, flash:2 },
+  { name: "Paradox",      range:4, aggr:3, compl:5, team:4, tank:2, mobil:3, burst:3, front:2, roam:3, flash:5 },
+  { name: "Pocket",       range:3, aggr:4, compl:3, team:2, tank:2, mobil:3, burst:5, front:3, roam:4, flash:4 },
+  { name: "Seven",        range:3, aggr:3, compl:3, team:4, tank:3, mobil:2, burst:2, front:3, roam:2, flash:3 },
+  { name: "Shiv",         range:2, aggr:5, compl:3, team:2, tank:4, mobil:3, burst:3, front:5, roam:4, flash:3 },
+  { name: "Vindicta",     range:5, aggr:2, compl:3, team:1, tank:1, mobil:4, burst:4, front:1, roam:3, flash:3 },
+  { name: "Viscous",      range:3, aggr:2, compl:3, team:5, tank:4, mobil:4, burst:2, front:3, roam:2, flash:4 },
+  { name: "Warden",       range:3, aggr:3, compl:2, team:4, tank:3, mobil:2, burst:3, front:3, roam:2, flash:2 },
+  { name: "Wraith",       range:4, aggr:3, compl:3, team:1, tank:1, mobil:3, burst:5, front:2, roam:3, flash:3 },
+  { name: "Yamato",       range:1, aggr:4, compl:5, team:1, tank:3, mobil:4, burst:4, front:4, roam:4, flash:5 },
+];
+
+// Конвертируем в удобный формат для расчёта
+const AXES_KEYS = ['range','aggr','compl','team','tank','mobil','burst','front','roam','flash'];
+const AXES_RU   = ['Дистанция','Агрессия','Сложность','Командность','Живучесть','Мобильность','Burst урон','Фронтлайн','Ротации','Flashy'];
+
+const HEROES = {};
+HERO_DATA.forEach(h => {
+  HEROES[h.name] = AXES_KEYS.map(k => h[k]);
+});
+
+// ═══════════════════════════════════════════════════════════
+// ВОПРОСЫ — КАЖДОЕ ЗНАЧЕНИЕ 1-5 ПОДПИСАНО
+// ═══════════════════════════════════════════════════════════
+
+const QUESTIONS = [
+  {
+    id: 1, axis: 0, type: "primary",
+    text: "На какой дистанции тебе комфортнее сражаться?",
+    labels: [
+      "Вплотную",
+      "Ближняя",
+      "Средняя",
+      "Дальняя",
+      "Снайпер"
+    ]
+  },
+  {
+    id: 2, axis: 1, type: "primary",
+    text: "Когда ты начинаешь искать драки вместо фарма?",
+    labels: [
+      "Фармлю до лейта",
+      "Фарм, дерусь редко",
+      "50 / 50",
+      "Ищу драки часто",
+      "Дерусь с 1-й минуты"
+    ]
+  },
+  {
+    id: 3, axis: 2, type: "primary",
+    text: "Какой уровень сложности персонажа тебе подходит?",
+    labels: [
+      "Простейший",
+      "Простой",
+      "Средний",
+      "Сложный",
+      "Чем сложнее тем лучше"
+    ]
+  },
+  {
+    id: 4, axis: 3, type: "primary",
+    text: "Насколько тебе важно помогать тиммейтам?",
+    labels: [
+      "Играю на себя",
+      "В основном соло",
+      "Баланс",
+      "Люблю помогать",
+      "Команда = главное"
+    ]
+  },
+  {
+    id: 5, axis: 4, type: "primary",
+    text: "Как ты относишься к получению урона в бою?",
+    labels: [
+      "Не хочу получать",
+      "Стараюсь избегать",
+      "Принимаю если надо",
+      "Нормально стою под огнём",
+      "Я танк"
+    ]
+  },
+  {
+    id: 6, axis: 5, type: "primary",
+    text: "Как ты перемещаешься в бою?",
+    labels: [
+      "Стою на позиции",
+      "Двигаюсь мало",
+      "По необходимости",
+      "Активно двигаюсь",
+      "Постоянно летаю/дэшу"
+    ]
+  },
+  {
+    id: 7, axis: 6, type: "primary",
+    text: "Как тебе нравится наносить урон?",
+    labels: [
+      "DoT / изматывать",
+      "Стабильный урон",
+      "Зависит от ситуации",
+      "Быстрые комбо",
+      "Мгновенный burst"
+    ]
+  },
+  {
+    id: 8, axis: 7, type: "primary",
+    text: "Где ты находишься в командном бою?",
+    labels: [
+      "Сзади, безопасно",
+      "Второй ряд",
+      "В середине",
+      "На острие атаки",
+      "Я первый вхожу"
+    ]
+  },
+  {
+    id: 9, axis: 8, type: "primary",
+    text: "Что ты делаешь после лейнинга?",
+    labels: [
+      "Пушу / фармлю",
+      "Больше фарм",
+      "Баланс",
+      "Больше ротаций",
+      "Ганкаю нон-стоп"
+    ]
+  },
+  {
+    id: 10, axis: 9, type: "primary",
+    text: "Какой стиль игры тебе ближе?",
+    labels: [
+      "Стабильный",
+      "Скорее надёжный",
+      "Смешанный",
+      "Нестандартный",
+      "Импровизация / flashy"
+    ]
+  },
+  // ─── Кросс-проверки ───
+  {
+    id: 11, axis: 0, type: "cross",
+    text: "В других шутерах ты обычно выбираешь:",
+    labels: [
+      "Шотган / ближний бой",
+      "SMG / ближне-среднее",
+      "Автомат / универсал",
+      "DMR / полуавтомат",
+      "Снайперка"
+    ]
+  },
+  {
+    id: 12, axis: 1, type: "cross",
+    text: "Враг с низким HP убегает за вышку. Действия?",
+    labels: [
+      "Отпускаю",
+      "Скорее отпущу",
+      "Зависит от ситуации",
+      "Скорее дайвну",
+      "Дайвлю 100%"
+    ]
+  },
+  {
+    id: 13, axis: 4, type: "cross",
+    text: "Ты умер первым, но команда выиграла бой. Реакция?",
+    labels: [
+      "Раздражает",
+      "Немного неприятно",
+      "Нейтрально",
+      "Норм, был полезен",
+      "Отлично, помог команде"
+    ]
+  },
+  {
+    id: 14, axis: 3, type: "cross",
+    text: "Что приносит больше удовольствия?",
+    labels: [
+      "4 фрага самому",
+      "Скорее личные фраги",
+      "Оба одинаково",
+      "Скорее хороший setup",
+      "Идеальный ассист"
+    ]
+  },
+  {
+    id: 15, axis: 2, type: "cross",
+    text: "Нравится изучать неочевидные механики и комбо предметов?",
+    labels: [
+      "Нет, интуитивно",
+      "Базовое изучу",
+      "Иногда интересно",
+      "Люблю искать фишки",
+      "Самое интересное!"
+    ]
+  },
+  {
+    id: 16, axis: 9, type: "cross",
+    text: "Твой идеальный клип для YouTube:",
+    labels: [
+      "Грамотный тимфайт",
+      "Чёткий clutch",
+      "Зависит от настроения",
+      "Неожиданный outplay",
+      "Безумный 1v4"
+    ]
+  },
+  {
+    id: 17, axis: 5, type: "cross",
+    text: "Между боями, когда нет конкретной цели, ты обычно:",
+    labels: [
+      "Стою на позиции",
+      "Держу зону",
+      "И то и другое",
+      "Активно перемещаюсь",
+      "Бегу, не могу стоять"
+    ]
+  },
+  {
+    id: 18, axis: 6, type: "cross",
+    text: "Какой бой тебе нравится больше?",
+    labels: [
+      "Длинный, напряжённый",
+      "Скорее длинный",
+      "Без разницы",
+      "Скорее быстрый",
+      "Быстрый, один момент"
+    ]
+  }
+];
+
+// ═══════════════════════════════════════════════════════════
+// СОСТОЯНИЕ
+// ═══════════════════════════════════════════════════════════
+
+let currentQ = 0;
+let answers = {};
+
+// ═══════════════════════════════════════════════════════════
+// РЕНДЕР
+// ═══════════════════════════════════════════════════════════
+
+function renderQuestion(idx) {
+  const q = QUESTIONS[idx];
+  const selected = answers[q.id] || 0;
+
+  let optionsHTML = '';
+  for (let v = 1; v <= 5; v++) {
+    optionsHTML += `
+      <div class="scale-option ${selected === v ? 'selected' : ''}"
+           onclick="selectAnswer(${q.id}, ${v}, this)">
+        <div class="scale-option-btn">${v}</div>
+        <div class="scale-option-label">${q.labels[v - 1]}</div>
+      </div>
+    `;
+  }
+
+  document.getElementById('quizArea').innerHTML = `
+    <div class="question-card">
+      <div class="question-number">
+        Вопрос ${idx + 1} / 18 ${q.type === 'cross' ? '· уточняющий' : ''}
+      </div>
+      <div class="question-text">${q.text}</div>
+      <div class="scale-container">${optionsHTML}</div>
+    </div>
+  `;
+
+  updateProgress();
+  document.getElementById('btnBack').disabled = (idx === 0);
+  document.getElementById('btnNext').disabled = !answers[q.id];
+
+  const btnNext = document.getElementById('btnNext');
+  btnNext.textContent = (idx === QUESTIONS.length - 1 && answers[q.id])
+    ? 'Показать результат →'
+    : 'Далее →';
+}
+
+function selectAnswer(qId, value, optionEl) {
+  answers[qId] = value;
+
+  const siblings = optionEl.parentNode.querySelectorAll('.scale-option');
+  siblings.forEach(s => s.classList.remove('selected'));
+  optionEl.classList.add('selected');
+
+  document.getElementById('btnNext').disabled = false;
+  updateProgress();
+
+  if (currentQ === QUESTIONS.length - 1) {
+    document.getElementById('btnNext').textContent = 'Показать результат →';
+  }
+}
+
+function updateProgress() {
+  const count = Object.keys(answers).length;
+  const pct = Math.round((count / 18) * 100);
+  document.getElementById('progressLabel').textContent = `Вопрос ${currentQ + 1} из 18`;
+  document.getElementById('progressPct').textContent = `${pct}%`;
+  document.getElementById('progressFill').style.width = `${pct}%`;
+}
+
+function goNext() {
+  if (currentQ < QUESTIONS.length - 1) {
+    currentQ++;
+    renderQuestion(currentQ);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else {
+    showResults();
+  }
+}
+
+function goBack() {
+  if (currentQ > 0) {
+    currentQ--;
+    renderQuestion(currentQ);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// РАСЧЁТ
+// ═══════════════════════════════════════════════════════════
+
+function buildProfile() {
+  const primary = new Array(10).fill(null);
+  const cross   = new Array(10).fill(null);
+
+  QUESTIONS.forEach(q => {
+    const val = answers[q.id];
+    if (!val) return;
+    if (q.type === 'primary') primary[q.axis] = val;
+    else cross[q.axis] = val;
+  });
+
+  return Array.from({ length: 10 }, (_, i) => {
+    if (primary[i] != null && cross[i] != null)
+      return primary[i] * 0.65 + cross[i] * 0.35;
+    if (primary[i] != null) return primary[i];
+    return 3.0;
+  });
+}
+
+function euclidean(a, b) {
+  return Math.sqrt(a.reduce((sum, v, i) => sum + (v - b[i]) ** 2, 0));
+}
+
+function matchHeroes(profile) {
+  const maxDist = Math.sqrt(10 * 16);
+  return Object.entries(HEROES)
+    .map(([name, vec]) => ({
+      name,
+      pct: Math.round((1 - euclidean(profile, vec) / maxDist) * 1000) / 10
+    }))
+    .sort((a, b) => b.pct - a.pct);
+}
+
+// ═══════════════════════════════════════════════════════════
+// РЕЗУЛЬТАТЫ
+// ═══════════════════════════════════════════════════════════
+
+function showResults() {
+  document.getElementById('quizArea').style.display = 'none';
+  document.getElementById('navButtons').style.display = 'none';
+  document.getElementById('progressWrap').style.display = 'none';
+
+  const profile = buildProfile();
+  const results = matchHeroes(profile);
+
+  // Профиль
+  document.getElementById('profileBars').innerHTML = profile.map((val, i) => `
+    <div class="profile-axis">
+      <span class="axis-name">${AXES_RU[i]}</span>
+      <div class="axis-bar-bg">
+        <div class="axis-bar-fill" style="width:${(val / 5) * 100}%"></div>
+      </div>
+      <span class="axis-value">${val.toFixed(1)}</span>
+    </div>
+  `).join('');
+
+  // Топ-5
+  document.getElementById('heroCards').innerHTML = results.slice(0, 5).map((h, i) => `
+    <div class="hero-card">
+      <div class="hero-rank">${i + 1}</div>
+      <div class="hero-info">
+        <div class="hero-name">${h.name}</div>
+        <div class="hero-match-bar-bg">
+          <div class="hero-match-bar-fill" style="width:${h.pct}%"></div>
+        </div>
+      </div>
+      <div class="hero-pct">${h.pct}%</div>
+    </div>
+  `).join('');
+
+  // Worst
+  document.getElementById('worstHeroes').innerHTML = results.slice(-3).map(h => `
+    <div class="worst-hero">
+      <span>✗ ${h.name}</span>
+      <span>${h.pct}%</span>
+    </div>
+  `).join('');
+
+  // Select
+  const sel = document.getElementById('realMainSelect');
+  sel.innerHTML = '<option value="">— выбери —</option>' +
+    HERO_DATA.map(h => h.name).sort().map(n => `<option value="${n}">${n}</option>`).join('');
+
+  document.getElementById('results').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function setFeedback(btn, agreed) {
+  document.querySelectorAll('.fb-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  console.log('Feedback:', { agreed, answers, realMain: document.getElementById('realMainSelect').value });
+}
+
+function restart() {
+  answers = {};
+  currentQ = 0;
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('quizArea').style.display = 'block';
+  document.getElementById('navButtons').style.display = 'flex';
+  document.getElementById('progressWrap').style.display = 'block';
+  renderQuestion(0);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ═══════════════════════════════════════════════════════════
+// СТАРТ
+// ═══════════════════════════════════════════════════════════
+
+renderQuestion(0);
+</script>
+
 </body>
 </html>
