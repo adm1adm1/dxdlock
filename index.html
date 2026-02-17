@@ -4,138 +4,179 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Deadlock — Найди мейна</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+    :root {
+      --gold:#c8a44e;--gold-light:#e8d48b;--gold-dark:#8a6d2b;
+      --gold-glow:rgba(200,164,78,0.15);
+      --teal:#3a8a7a;--teal-light:#5ab8a6;
+      --red:#a04040;--red-light:#d06060;
+      --bg-deep:#08080c;--bg-card:#0e0e14;
+      --border:rgba(200,164,78,0.12);--border-hover:rgba(200,164,78,0.3);
+      --text:#c8c0b0;--text-dim:#6a6458;--text-muted:#4a453d;
+    }
     *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:'Inter',sans-serif;background:#0a0a0f;color:#e0e0e0;min-height:100vh;overflow-x:hidden}
-    body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at 20% 50%,rgba(120,40,200,.08) 0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(255,100,50,.06) 0%,transparent 50%),radial-gradient(ellipse at 50% 80%,rgba(0,200,150,.05) 0%,transparent 50%);pointer-events:none;z-index:0}
+    body{font-family:'Inter',sans-serif;background:var(--bg-deep);color:var(--text);min-height:100vh;overflow-x:hidden}
+    body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(200,164,78,.04) 0%,transparent 60%),radial-gradient(ellipse at 0% 100%,rgba(58,138,122,.03) 0%,transparent 50%);pointer-events:none;z-index:0}
     .container{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:40px 20px 80px}
 
+    /* ═══ HEADER ═══ */
     .header{text-align:center;margin-bottom:48px}
-    .header h1{font-size:2.4rem;font-weight:900;letter-spacing:-1px;background:linear-gradient(135deg,#ff6a3d,#f5c542,#ff6a3d);background-size:200% 200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 3s ease-in-out infinite}
-    @keyframes shimmer{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
-    .header p{margin-top:12px;color:#888;font-size:.95rem}
+    .header-emblem::before{content:'◆';font-size:36px;color:var(--gold);text-shadow:0 0 30px rgba(200,164,78,.3)}
+    .header h1{font-family:'Cinzel',serif;font-size:2.2rem;font-weight:900;letter-spacing:5px;text-transform:uppercase;color:var(--gold);text-shadow:0 0 40px rgba(200,164,78,.2);margin-top:12px}
+    .header-subtitle{font-family:'Cinzel',serif;font-size:.8rem;letter-spacing:3px;text-transform:uppercase;color:var(--gold-dark);margin-top:6px}
+    .deco-line{display:flex;align-items:center;justify-content:center;gap:12px;margin:16px 0}
+    .deco-line::before,.deco-line::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--gold-dark),transparent)}
+    .deco-diamond{width:6px;height:6px;background:var(--gold-dark);transform:rotate(45deg);flex-shrink:0}
+    .header p{margin-top:12px;color:var(--text-dim);font-size:.85rem;letter-spacing:1px}
 
-    .progress-wrap{margin-bottom:36px}
-    .progress-info{display:flex;justify-content:space-between;font-size:.8rem;color:#666;margin-bottom:8px}
-    .progress-bar{width:100%;height:4px;background:#1a1a2e;border-radius:2px;overflow:hidden}
-    .progress-fill{height:100%;background:linear-gradient(90deg,#ff6a3d,#f5c542);border-radius:2px;transition:width .4s ease}
+    /* ═══ PROGRESS ═══ */
+    .progress-wrap{margin-bottom:32px}
+    .progress-info{display:flex;justify-content:space-between;font-size:.72rem;color:var(--text-dim);margin-bottom:8px;font-family:'Cinzel',serif;letter-spacing:1px;text-transform:uppercase}
+    .progress-bar{width:100%;height:3px;background:rgba(200,164,78,.1);overflow:hidden}
+    .progress-fill{height:100%;background:linear-gradient(90deg,var(--gold-dark),var(--gold),var(--gold-dark));transition:width .4s ease}
 
-    .question-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:36px 32px;margin-bottom:24px;backdrop-filter:blur(10px)}
-    .question-number{font-size:.75rem;font-weight:700;color:#ff6a3d;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px}
-    .question-text{font-size:1.15rem;font-weight:600;line-height:1.5;margin-bottom:28px}
+    /* ═══ QUESTION CARD ═══ */
+    .question-card{background:var(--bg-card);border:1px solid var(--border);padding:32px 28px;margin-bottom:20px}
+    .question-number{font-family:'Cinzel',serif;font-size:.68rem;font-weight:700;color:var(--gold-dark);text-transform:uppercase;letter-spacing:2px;margin-bottom:14px}
+    .question-text{font-size:1.05rem;font-weight:600;line-height:1.6;margin-bottom:28px}
 
-    .scale-container{display:flex;gap:6px;justify-content:center}
-    .scale-option{display:flex;flex-direction:column;align-items:center;flex:1;max-width:140px;cursor:pointer}
-    .scale-option-btn{width:52px;height:52px;border-radius:12px;border:2px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:#ccc;font-size:1.1rem;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;margin-bottom:8px}
-    .scale-option:hover .scale-option-btn{border-color:rgba(255,106,61,.5);background:rgba(255,106,61,.1);color:#fff;transform:translateY(-2px)}
-    .scale-option.selected .scale-option-btn{border-color:#ff6a3d;background:rgba(255,106,61,.2);color:#ff6a3d;box-shadow:0 0 20px rgba(255,106,61,.15)}
-    .scale-option-label{font-size:.68rem;color:#666;text-align:center;line-height:1.3;min-height:32px;display:flex;align-items:flex-start;justify-content:center}
-    .scale-option.selected .scale-option-label{color:#ff6a3d}
-    .scale-option:hover .scale-option-label{color:#aaa}
+    /* ═══ SCALE — SIMPLIFIED ═══ */
+    .scale-container{display:flex;gap:8px;justify-content:center}
+    .scale-option{display:flex;flex-direction:column;align-items:center;flex:1;max-width:130px;cursor:pointer}
+    .scale-option-btn{
+      width:54px;height:54px;border-radius:10px;
+      border:1px solid rgba(200,164,78,.12);
+      background:rgba(200,164,78,.03);
+      color:var(--text-dim);font-family:'Cinzel',serif;
+      font-size:1.1rem;font-weight:700;cursor:pointer;
+      transition:all .2s;display:flex;align-items:center;
+      justify-content:center;margin-bottom:8px;
+    }
+    .scale-option:hover .scale-option-btn{border-color:var(--gold-dark);background:rgba(200,164,78,.08);color:var(--gold-light);transform:translateY(-2px)}
+    .scale-option.selected .scale-option-btn{border-color:var(--gold);background:rgba(200,164,78,.15);color:var(--gold);box-shadow:0 0 20px rgba(200,164,78,.12)}
+    .scale-option-label{font-size:.62rem;color:var(--text-muted);text-align:center;line-height:1.3;min-height:28px;display:flex;align-items:flex-start;justify-content:center;transition:color .2s}
+    .scale-option.selected .scale-option-label{color:var(--gold)}
+    .scale-option:hover .scale-option-label{color:var(--text-dim)}
 
-    .nav-buttons{display:flex;gap:12px;margin-top:20px;justify-content:center}
-    .btn{padding:14px 32px;border-radius:12px;border:none;font-family:'Inter',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:all .2s}
-    .btn:disabled{opacity:.3;cursor:not-allowed}
-    .btn-back{background:rgba(255,255,255,.06);color:#999}
-    .btn-back:hover:not(:disabled){background:rgba(255,255,255,.1);color:#ccc}
-    .btn-next{background:linear-gradient(135deg,#ff6a3d,#e8552e);color:#fff}
-    .btn-next:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 20px rgba(255,106,61,.3)}
-    .btn-next:disabled{background:#333;color:#666}
+    /* ═══ NAV ═══ */
+    .nav-buttons{display:flex;gap:12px;margin-top:16px;justify-content:center}
+    .btn{padding:12px 32px;border:1px solid var(--border);font-family:'Cinzel',serif;font-size:.8rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s;background:transparent}
+    .btn:disabled{opacity:.25;cursor:not-allowed}
+    .btn-back{color:var(--text-dim);border-color:rgba(200,164,78,.08)}
+    .btn-back:hover:not(:disabled){border-color:var(--border-hover);color:var(--text)}
+    .btn-next{background:linear-gradient(180deg,rgba(200,164,78,.12),rgba(200,164,78,.04));color:var(--gold);border-color:var(--gold-dark)}
+    .btn-next:hover:not(:disabled){background:linear-gradient(180deg,rgba(200,164,78,.2),rgba(200,164,78,.08));box-shadow:0 0 20px rgba(200,164,78,.1)}
+    .btn-next:disabled{background:transparent;color:var(--text-muted);border-color:rgba(200,164,78,.06)}
 
+    /* ═══ RESULTS ═══ */
     #results{display:none}
-    .results-title{text-align:center;font-size:1.6rem;font-weight:900;margin-bottom:8px}
-    .results-subtitle{text-align:center;color:#777;margin-bottom:36px;font-size:.9rem}
+    .results-title{text-align:center;font-family:'Cinzel',serif;font-size:1.5rem;font-weight:900;letter-spacing:4px;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+    .results-subtitle{text-align:center;color:var(--text-dim);margin-bottom:10px;font-size:.88rem}
 
-    .meta-cards{display:flex;gap:12px;margin-bottom:28px}
-    .meta-card{flex:1;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:20px;text-align:center}
-    .meta-card-label{font-size:.7rem;text-transform:uppercase;letter-spacing:1.5px;color:#666;margin-bottom:8px}
-    .meta-card-value{font-size:1.3rem;font-weight:700}
-    .meta-card-hint{font-size:.7rem;color:#555;margin-top:6px}
-    .confidence-high{color:#4ade80}
-    .confidence-medium{color:#f5c542}
-    .confidence-hybrid{color:#ff6a3d}
-    .consistency-good{color:#4ade80}
-    .consistency-ok{color:#f5c542}
-    .consistency-conflict{color:#ff6a3d}
+    .meta-cards{display:flex;gap:10px;margin-bottom:24px}
+    .meta-card{flex:1;background:var(--bg-card);border:1px solid var(--border);padding:16px;text-align:center}
+    .meta-card-label{font-family:'Cinzel',serif;font-size:.6rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);margin-bottom:6px}
+    .meta-card-value{font-size:1.1rem;font-weight:700}
+    .meta-card-hint{font-size:.6rem;color:var(--text-muted);margin-top:4px}
+    .confidence-high{color:var(--teal-light)}.confidence-medium{color:var(--gold)}.confidence-hybrid{color:var(--red-light)}
+    .consistency-good{color:var(--teal-light)}.consistency-ok{color:var(--gold)}.consistency-conflict{color:var(--red-light)}
 
-    .conflicts-section{background:rgba(255,106,61,.05);border:1px solid rgba(255,106,61,.15);border-radius:14px;padding:20px 24px;margin-bottom:28px}
-    .conflicts-section h3{font-size:.8rem;text-transform:uppercase;letter-spacing:2px;color:#ff6a3d;margin-bottom:12px}
-    .conflict-item{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:.85rem}
+    .conflicts-section{background:rgba(160,64,64,.05);border:1px solid rgba(160,64,64,.15);padding:16px 20px;margin-bottom:24px}
+    .conflicts-section h3{font-family:'Cinzel',serif;font-size:.7rem;text-transform:uppercase;letter-spacing:2px;color:var(--red-light);margin-bottom:10px}
+    .conflict-item{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(160,64,64,.08);font-size:.78rem}
     .conflict-item:last-child{border-bottom:none}
-    .conflict-axis{color:#ccc;width:110px;flex-shrink:0}
-    .conflict-detail{color:#888;flex:1}
-    .conflict-icon{font-size:1rem;flex-shrink:0}
+    .conflict-axis{color:var(--text);width:100px;flex-shrink:0}
+    .conflict-detail{color:var(--text-dim);flex:1}
 
-    .profile-section{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:28px;margin-bottom:28px}
-    .profile-section h3{font-size:.8rem;text-transform:uppercase;letter-spacing:2px;color:#888;margin-bottom:20px}
-    .profile-axis{display:flex;align-items:center;margin-bottom:10px;gap:12px}
-    .axis-name{width:110px;font-size:.78rem;color:#999;text-align:right;flex-shrink:0}
-    .axis-bar-bg{flex:1;height:8px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden}
-    .axis-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#ff6a3d,#f5c542);transition:width .6s ease}
-    .axis-bar-fill.conflicted{background:linear-gradient(90deg,#ff6a3d,#ff4444);animation:pulse-bar 1.5s ease-in-out infinite}
-    @keyframes pulse-bar{0%,100%{opacity:1}50%{opacity:.6}}
-    .axis-value{width:32px;font-size:.78rem;color:#aaa;flex-shrink:0}
-    .axis-weight{width:36px;font-size:.65rem;color:#555;flex-shrink:0}
+    .section-card{background:var(--bg-card);border:1px solid var(--border);padding:24px;margin-bottom:20px}
+    .section-card h3{font-family:'Cinzel',serif;font-size:.72rem;text-transform:uppercase;letter-spacing:2px;color:var(--text-dim);margin-bottom:16px}
 
-    /* ═══ HERO ENTRIES ═══ */
-    .hero-entry{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:14px;margin-bottom:12px;overflow:hidden}
-    .hero-entry.top-pick{border-color:rgba(255,106,61,.3);background:rgba(255,106,61,.05)}
-    .hero-card{display:flex;align-items:center;padding:20px 24px 12px}
-    .hero-rank{font-size:1.8rem;font-weight:900;color:#333;width:48px;flex-shrink:0}
-    .top-pick .hero-rank{color:#ff6a3d}
+    .profile-axis{display:flex;align-items:center;margin-bottom:8px;gap:10px}
+    .axis-name{width:100px;font-size:.72rem;color:var(--text-dim);text-align:right;flex-shrink:0}
+    .axis-bar-bg{flex:1;height:6px;background:rgba(200,164,78,.06);overflow:hidden}
+    .axis-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold-dark),var(--gold));transition:width .6s ease}
+    .axis-bar-fill.conflicted{background:linear-gradient(90deg,var(--red),var(--red-light));animation:pulse-bar 1.5s ease-in-out infinite}
+    @keyframes pulse-bar{0%,100%{opacity:1}50%{opacity:.5}}
+    .axis-value{width:28px;font-size:.72rem;color:var(--text-dim);flex-shrink:0}
+    .axis-weight{width:32px;font-size:.58rem;color:var(--text-muted);flex-shrink:0}
+
+    .hero-entry{background:var(--bg-card);border:1px solid var(--border);margin-bottom:10px;overflow:hidden}
+    .hero-entry.top-pick{border-color:rgba(200,164,78,.3);background:linear-gradient(180deg,rgba(200,164,78,.05),var(--bg-card))}
+    .hero-entry.top-pick::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+    .hero-entry{position:relative}
+    .hero-card{display:flex;align-items:center;padding:16px 20px 8px}
+    .hero-rank{font-family:'Cinzel',serif;font-size:1.4rem;font-weight:900;color:var(--text-muted);width:40px;flex-shrink:0}
+    .top-pick .hero-rank{color:var(--gold)}
     .hero-info{flex:1}
-    .hero-name{font-size:1.1rem;font-weight:700;margin-bottom:6px}
-    .hero-match-bar-bg{height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
-    .hero-match-bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#ff6a3d,#f5c542);transition:width .8s ease}
-    .hero-pct{font-size:1.3rem;font-weight:700;color:#777;width:70px;text-align:right;flex-shrink:0}
-    .top-pick .hero-pct{color:#ff6a3d}
+    .hero-name{font-family:'Cinzel',serif;font-size:.95rem;font-weight:700;letter-spacing:1px;margin-bottom:4px}
+    .top-pick .hero-name{color:var(--gold-light)}
+    .hero-match-bar-bg{height:4px;background:rgba(200,164,78,.06);overflow:hidden}
+    .hero-match-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold-dark),var(--gold));transition:width .8s ease}
+    .hero-pct{font-family:'Cinzel',serif;font-size:1.1rem;font-weight:700;color:var(--text-dim);width:64px;text-align:right;flex-shrink:0}
+    .top-pick .hero-pct{color:var(--gold)}
 
-    /* ═══ EXPLAIN ═══ */
-    .hero-explain-area{padding:0 24px 16px}
-    .hero-explain-toggle{display:inline-block;font-size:.72rem;color:#555;cursor:pointer;transition:color .2s;background:none;border:none;font-family:'Inter',sans-serif;padding:4px 0}
-    .hero-explain-toggle:hover{color:#ff6a3d}
-    .hero-explain{margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.05)}
-    .explain-summary{font-size:.75rem;color:#888;margin-bottom:10px}
-    .explain-row{display:flex;align-items:center;padding:3px 0;font-size:.75rem;gap:6px}
-    .explain-icon{width:20px;text-align:center;flex-shrink:0;font-size:.85rem}
-    .explain-axis-name{width:110px;color:#777;flex-shrink:0}
-    .explain-values{color:#666;display:flex;gap:16px}
-    .explain-player{color:#ff6a3d}
-    .explain-hero{color:#4a9eff}
-    .explain-diff{color:#555;font-size:.65rem;width:50px;text-align:right;flex-shrink:0}
+    .hero-explain-area{padding:0 20px 12px}
+    .hero-explain-toggle{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);cursor:pointer;background:none;border:none;padding:4px 0;transition:color .2s}
+    .hero-explain-toggle:hover{color:var(--gold)}
+    .hero-explain{margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+    .explain-summary{font-size:.68rem;color:var(--text-dim);margin-bottom:8px}
+    .explain-row{display:flex;align-items:center;padding:2px 0;font-size:.68rem;gap:4px}
+    .explain-icon{width:18px;text-align:center;flex-shrink:0;font-size:.78rem}
+    .explain-axis-name{width:100px;color:var(--text-dim);flex-shrink:0}
+    .explain-values{color:var(--text-muted);display:flex;gap:12px}
+    .explain-player{color:var(--gold)}.explain-hero{color:var(--teal-light)}
+    .explain-diff{color:var(--text-muted);font-size:.58rem;width:44px;text-align:right;flex-shrink:0}
 
-    .worst-section{margin-top:28px}
-    .worst-section h3{font-size:.8rem;text-transform:uppercase;letter-spacing:2px;color:#555;margin-bottom:14px}
-    .worst-hero{display:flex;justify-content:space-between;padding:8px 0;font-size:.85rem;color:#555;border-bottom:1px solid rgba(255,255,255,.03)}
+    .worst-section{margin-top:24px}
+    .worst-section h3{font-family:'Cinzel',serif;font-size:.7rem;text-transform:uppercase;letter-spacing:2px;color:var(--text-muted);margin-bottom:12px}
+    .worst-hero{display:flex;justify-content:space-between;padding:6px 0;font-size:.78rem;color:var(--text-muted);border-bottom:1px solid rgba(200,164,78,.04)}
 
-    .feedback-section{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:28px;margin-top:36px;text-align:center}
-    .feedback-section h3{font-size:1rem;margin-bottom:16px}
-    .feedback-buttons{display:flex;gap:12px;justify-content:center;margin-bottom:20px}
-    .fb-btn{padding:10px 28px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#ccc;font-family:'Inter',sans-serif;font-size:.9rem;cursor:pointer;transition:all .2s}
-    .fb-btn:hover{border-color:#ff6a3d;background:rgba(255,106,61,.1)}
-    .fb-btn.active{border-color:#ff6a3d;background:rgba(255,106,61,.15);color:#ff6a3d}
-    .real-main-select{margin-top:16px}
-    .real-main-select label{display:block;font-size:.85rem;color:#888;margin-bottom:8px}
-    .real-main-select select{padding:10px 16px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:#111;color:#e0e0e0;font-family:'Inter',sans-serif;font-size:.9rem;width:220px;cursor:pointer}
-    .restart-btn{display:inline-block;margin-top:40px;padding:14px 40px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:transparent;color:#888;font-family:'Inter',sans-serif;font-size:.9rem;cursor:pointer;transition:all .2s}
-    .restart-btn:hover{border-color:#ff6a3d;color:#ff6a3d}
-    .export-btn{display:inline-block;margin-top:12px;padding:10px 28px;border-radius:10px;border:1px solid rgba(255,255,255,.08);background:transparent;color:#666;font-family:'Inter',sans-serif;font-size:.8rem;cursor:pointer;transition:all .2s}
-    .export-btn:hover{border-color:#888;color:#aaa}
-    .debug-section{margin-top:36px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.05);border-radius:12px;padding:20px}
-    .debug-section summary{font-size:.75rem;color:#555;cursor:pointer;text-transform:uppercase;letter-spacing:1px}
-    .debug-section pre{margin-top:12px;font-size:.7rem;color:#666;white-space:pre-wrap;line-height:1.5}
+    .feedback-section{background:var(--bg-card);border:1px solid var(--border);padding:24px;margin-top:28px;text-align:center}
+    .feedback-section h3{font-family:'Cinzel',serif;font-size:.85rem;letter-spacing:1px;margin-bottom:14px}
+    .feedback-buttons{display:flex;gap:10px;justify-content:center;margin-bottom:16px}
+    .fb-btn{padding:8px 24px;border:1px solid var(--border);background:transparent;color:var(--text-dim);font-family:'Inter',sans-serif;font-size:.82rem;cursor:pointer;transition:all .2s}
+    .fb-btn:hover{border-color:var(--gold-dark);background:var(--gold-glow);color:var(--gold)}
+    .fb-btn.active{border-color:var(--gold);background:rgba(200,164,78,.1);color:var(--gold)}
+    .real-main-select{margin-top:12px}
+    .real-main-select label{display:block;font-size:.78rem;color:var(--text-dim);margin-bottom:6px}
+    .real-main-select select{padding:8px 14px;border:1px solid var(--border);background:var(--bg-deep);color:var(--text);font-family:'Inter',sans-serif;font-size:.82rem;width:200px;cursor:pointer;border-radius:0}
+
+    /* ═══ CALIBRATION FORM ═══ */
+    .calibration-section{background:var(--bg-card);border:1px solid var(--border);padding:24px;margin-top:28px}
+    .calibration-section h3{font-family:'Cinzel',serif;font-size:.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:6px;text-align:center}
+    .calibration-section .sub{font-size:.72rem;color:var(--text-dim);text-align:center;margin-bottom:20px}
+    .cal-hero-select{text-align:center;margin-bottom:20px}
+    .cal-hero-select select{padding:8px 14px;border:1px solid var(--border);background:var(--bg-deep);color:var(--text);font-family:'Inter',sans-serif;font-size:.82rem;width:200px;border-radius:0}
+    .cal-axis-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+    .cal-axis-name{width:100px;font-size:.72rem;color:var(--text-dim);text-align:right;flex-shrink:0}
+    .cal-btns{display:flex;gap:4px}
+    .cal-btn{width:36px;height:36px;border:1px solid rgba(200,164,78,.1);background:rgba(200,164,78,.02);color:var(--text-dim);font-family:'Cinzel',serif;font-size:.85rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;border-radius:6px}
+    .cal-btn:hover{border-color:var(--gold-dark);background:rgba(200,164,78,.08);color:var(--gold-light)}
+    .cal-btn.selected{border-color:var(--gold);background:rgba(200,164,78,.15);color:var(--gold)}
+    .cal-labels{display:flex;justify-content:space-between;font-size:.55rem;color:var(--text-muted);width:196px}
+    .cal-submit{display:block;margin:20px auto 0;padding:10px 32px;border:1px solid var(--gold-dark);background:rgba(200,164,78,.08);color:var(--gold);font-family:'Cinzel',serif;font-size:.75rem;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s}
+    .cal-submit:hover{background:rgba(200,164,78,.15);box-shadow:0 0 15px rgba(200,164,78,.1)}
+    .cal-msg{text-align:center;font-size:.72rem;color:var(--teal-light);margin-top:10px;min-height:20px}
+
+    .bottom-btns{text-align:center;margin-top:32px}
+    .export-btn,.restart-btn{display:inline-block;padding:10px 28px;border:1px solid rgba(200,164,78,.08);background:transparent;color:var(--text-muted);font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s;margin:4px}
+    .export-btn:hover,.restart-btn:hover{border-color:var(--gold-dark);color:var(--gold)}
+
+    .debug-section{margin-top:28px;background:rgba(0,0,0,.3);border:1px solid rgba(200,164,78,.04);padding:16px}
+    .debug-section summary{font-size:.65rem;color:var(--text-muted);cursor:pointer;text-transform:uppercase;letter-spacing:1px}
+    .debug-section pre{margin-top:10px;font-size:.6rem;color:var(--text-muted);white-space:pre-wrap;line-height:1.5}
 
     @media(max-width:580px){
-      .header h1{font-size:1.7rem}
+      .header h1{font-size:1.5rem;letter-spacing:3px}
       .question-card{padding:24px 16px}
-      .scale-option-btn{width:44px;height:44px;font-size:.95rem}
-      .scale-option-label{font-size:.6rem}
+      .scale-option-btn{width:46px;height:46px;font-size:.95rem}
+      .scale-option-label{font-size:.55rem}
       .scale-container{gap:4px}
-      .hero-card{padding:14px 16px 8px}
-      .hero-explain-area{padding:0 16px 12px}
       .meta-cards{flex-direction:column}
-      .axis-name,.explain-axis-name{width:85px;font-size:.7rem}
+      .axis-name,.explain-axis-name,.cal-axis-name{width:80px;font-size:.65rem}
+      .cal-btn{width:32px;height:32px;font-size:.75rem}
     }
   </style>
 </head>
@@ -143,18 +184,19 @@
 <div class="container">
 
   <div class="header">
-    <h1>DEADLOCK — НАЙДИ МЕЙНА</h1>
-    <p>18 вопросов · 3 минуты · честный результат</p>
+    <div class="header-emblem"></div>
+    <h1>Deadlock</h1>
+    <div class="header-subtitle">Найди своего мейна</div>
+    <div class="deco-line"><div class="deco-diamond"></div></div>
+    <p>20 вопросов · 4 минуты · точный результат</p>
   </div>
 
   <div class="progress-wrap" id="progressWrap">
     <div class="progress-info">
-      <span id="progressLabel">Вопрос 1 из 18</span>
+      <span id="progressLabel">Вопрос 1 из 20</span>
       <span id="progressPct">0%</span>
     </div>
-    <div class="progress-bar">
-      <div class="progress-fill" id="progressFill" style="width:0%"></div>
-    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
   </div>
 
   <div id="quizArea"></div>
@@ -165,22 +207,18 @@
   </div>
 
   <div id="results">
-    <div class="results-title">Твой результат</div>
+    <div class="results-title">Результат</div>
     <div class="results-subtitle" id="resultsSubtitle"></div>
+    <div class="deco-line"><div class="deco-diamond"></div></div>
     <div class="meta-cards" id="metaCards"></div>
     <div class="conflicts-section" id="conflictsSection" style="display:none">
       <h3>⚠ Противоречия в ответах</h3>
       <div id="conflictsList"></div>
     </div>
-    <div class="profile-section">
-      <h3>Твой профиль</h3>
-      <div id="profileBars"></div>
-    </div>
+    <div class="section-card"><h3>Твой профиль</h3><div id="profileBars"></div></div>
     <div id="heroCards"></div>
-    <div class="worst-section">
-      <h3>Наименее подходящие</h3>
-      <div id="worstHeroes"></div>
-    </div>
+    <div class="worst-section"><h3>Наименее подходящие</h3><div id="worstHeroes"></div></div>
+
     <div class="feedback-section">
       <h3>Согласен с результатом?</h3>
       <div class="feedback-buttons">
@@ -192,630 +230,360 @@
         <select id="realMainSelect"><option value="">— выбери —</option></select>
       </div>
     </div>
-    <div style="text-align:center">
-      <button class="export-btn" onclick="exportProfile()">📋 Скопировать профиль</button><br>
+
+    <!-- ═══ CALIBRATION FORM ═══ -->
+    <div class="calibration-section">
+      <h3>Помоги откалибровать тест</h3>
+      <p class="sub">Если ты мейнишь героя — оцени его по каждой шкале. Это сделает тест точнее для всех.</p>
+      <div class="cal-hero-select">
+        <select id="calHeroSelect"><option value="">— выбери своего мейна —</option></select>
+      </div>
+      <div id="calAxes"></div>
+      <button class="cal-submit" onclick="submitCalibration()">Отправить</button>
+      <div class="cal-msg" id="calMsg"></div>
+    </div>
+
+    <div class="bottom-btns">
+      <button class="export-btn" onclick="exportProfile()">📋 Скопировать</button>
       <button class="restart-btn" onclick="restart()">Пройти заново</button>
     </div>
+
     <details class="debug-section">
-      <summary>Debug: полный лог алгоритма</summary>
+      <summary>Debug: лог алгоритма</summary>
       <pre id="debugLog"></pre>
     </details>
   </div>
-
 </div>
 
 <script>
 // ═══════════════════════════════════════════════════════════════
-//  КОНФИГ
+//  CONFIG
 // ═══════════════════════════════════════════════════════════════
+const NUM_AXES = 11;
+const TOTAL_Q = 20;
 
 const CONFIG = {
   weights: [
-    1.0,   // 0  Range
-    1.5,   // 1  Aggression
-    1.0,   // 2  Complexity
-    1.0,   // 3  Team
-    1.0,   // 4  Tankiness
-    1.5,   // 5  Mobility
-    1.0,   // 6  Burst
-    1.2,   // 7  Scaling        ← NEW
-    1.3,   // 8  Aim Reliance   ← NEW
-    1.0,   // 9  Zoning         ← NEW
+    1.0,  // 0  Range
+    1.5,  // 1  Aggression
+    1.0,  // 2  Complexity
+    1.0,  // 3  Team
+    1.0,  // 4  Tankiness
+    1.5,  // 5  Mobility
+    1.0,  // 6  Burst
+    1.2,  // 7  Scaling
+    1.3,  // 8  Aim
+    1.0,  // 9  Zoning
+    1.0,  // 10 Catch
   ],
-
-  transform: { 1:1.0, 2:2.2, 3:3.0, 4:3.8, 5:5.0 },
-
-  primaryWeight: 0.65,
-  crossWeight:   0.35,
-  conflictThreshold: 2,
-
-  confidence: {
-    highThreshold:   0.8,
-    mediumThreshold: 0.4,
-  },
-
-  // Пороги для объяснения совпадения
-  explain: {
-    matchThreshold: 0.5,   // diff ≤ 0.5 → совпадает
-    closeThreshold: 1.2,   // diff ≤ 1.2 → близко
-    // diff > 1.2 → расхождение
-  },
+  transform:{1:1.0,2:2.2,3:3.0,4:3.8,5:5.0},
+  primaryWeight:0.65, crossWeight:0.35,
+  conflictThreshold:2,
+  confidence:{highThreshold:0.8,mediumThreshold:0.4},
+  explain:{matchThreshold:0.5,closeThreshold:1.2},
 };
 
-
 // ═══════════════════════════════════════════════════════════════
-//  ДАННЫЕ ГЕРОЕВ — обновлённые оси
+//  HEROES — 38 heroes, 11 axes
 // ═══════════════════════════════════════════════════════════════
-//
-//  Последние 3 оси (было → стало):
-//    front → scaling   (1=ранний доминатор, 5=лейт-гейм керри)
-//    roam  → aim       (1=абилки решают, 5=аим = оружие)
-//    flash → zoning    (1=фланги/свобода, 5=контроль территории)
-
 const HERO_DATA = [
-  //                        Range Aggr Compl Team Tank Mobil Burst  Scal  Aim  Zone
-  { name:"Abrams",      range:1, aggr:5, compl:1, team:2, tank:5, mobil:3, burst:3, scaling:3, aim:2, zoning:1 },
-  { name:"Bebop",       range:3, aggr:3, compl:3, team:4, tank:3, mobil:2, burst:4, scaling:4, aim:2, zoning:4 },
-  { name:"Dynamo",      range:2, aggr:2, compl:3, team:5, tank:4, mobil:2, burst:3, scaling:5, aim:1, zoning:4 },
-  { name:"Grey Talon",  range:5, aggr:2, compl:2, team:2, tank:1, mobil:2, burst:3, scaling:3, aim:5, zoning:3 },
-  { name:"Haze",        range:3, aggr:4, compl:3, team:1, tank:1, mobil:3, burst:4, scaling:5, aim:5, zoning:1 },
-  { name:"Infernus",    range:2, aggr:4, compl:2, team:2, tank:3, mobil:3, burst:1, scaling:2, aim:2, zoning:3 },
-  { name:"Ivy",         range:4, aggr:2, compl:3, team:5, tank:2, mobil:4, burst:2, scaling:3, aim:2, zoning:4 },
-  { name:"Kelvin",      range:2, aggr:3, compl:3, team:4, tank:5, mobil:3, burst:2, scaling:2, aim:1, zoning:4 },
-  { name:"Lady Geist",  range:3, aggr:3, compl:2, team:2, tank:3, mobil:2, burst:3, scaling:4, aim:3, zoning:3 },
-  { name:"Lash",        range:2, aggr:5, compl:4, team:2, tank:2, mobil:5, burst:5, scaling:2, aim:3, zoning:1 },
-  { name:"McGinnis",    range:4, aggr:1, compl:2, team:4, tank:3, mobil:1, burst:1, scaling:5, aim:2, zoning:5 },
-  { name:"Mirage",      range:3, aggr:2, compl:3, team:2, tank:2, mobil:3, burst:3, scaling:4, aim:3, zoning:2 },
-  { name:"Mo & Krill",  range:1, aggr:5, compl:2, team:2, tank:5, mobil:3, burst:2, scaling:2, aim:1, zoning:2 },
-  { name:"Paradox",     range:3, aggr:3, compl:5, team:4, tank:2, mobil:3, burst:3, scaling:3, aim:3, zoning:3 },
-  { name:"Pocket",      range:2, aggr:4, compl:3, team:2, tank:2, mobil:4, burst:5, scaling:3, aim:2, zoning:2 },
-  { name:"Seven",       range:3, aggr:3, compl:3, team:4, tank:2, mobil:2, burst:2, scaling:5, aim:4, zoning:5 },
-  { name:"Shiv",        range:1, aggr:5, compl:4, team:2, tank:4, mobil:3, burst:4, scaling:2, aim:2, zoning:1 },
-  { name:"Vindicta",    range:5, aggr:2, compl:2, team:1, tank:1, mobil:4, burst:4, scaling:3, aim:5, zoning:3 },
-  { name:"Viscous",     range:2, aggr:3, compl:3, team:5, tank:4, mobil:4, burst:2, scaling:3, aim:2, zoning:4 },
-  { name:"Warden",      range:3, aggr:3, compl:2, team:4, tank:3, mobil:1, burst:2, scaling:4, aim:4, zoning:3 },
-  { name:"Wraith",      range:4, aggr:3, compl:3, team:1, tank:1, mobil:4, burst:4, scaling:5, aim:5, zoning:1 },
-  { name:"Yamato",      range:1, aggr:4, compl:5, team:1, tank:3, mobil:4, burst:4, scaling:3, aim:3, zoning:2 },
-  { name:"Apollo",      range:2, aggr:4, compl:4, team:2, tank:2, mobil:4, burst:4, scaling:2, aim:2, zoning:1 },
-  { name:"Billy",       range:2, aggr:4, compl:3, team:3, tank:3, mobil:2, burst:2, scaling:2, aim:2, zoning:3 },
-  { name:"Calico",      range:2, aggr:3, compl:4, team:1, tank:1, mobil:5, burst:5, scaling:3, aim:2, zoning:1 },
-  { name:"Celeste",     range:2, aggr:4, compl:2, team:3, tank:2, mobil:5, burst:4, scaling:4, aim:2, zoning:4 },
-  { name:"Drifter",     range:3, aggr:3, compl:3, team:2, tank:3, mobil:4, burst:3, scaling:3, aim:3, zoning:2 },
-  { name:"Graves",      range:2, aggr:2, compl:1, team:4, tank:1, mobil:2, burst:2, scaling:4, aim:1, zoning:4 },
-  { name:"Holliday",    range:2, aggr:4, compl:5, team:4, tank:1, mobil:5, burst:3, scaling:3, aim:3, zoning:4 },
-  { name:"Mina",        range:2, aggr:5, compl:4, team:2, tank:1, mobil:3, burst:4, scaling:3, aim:3, zoning:1 },
-  { name:"Paige",       range:5, aggr:1, compl:2, team:5, tank:2, mobil:1, burst:1, scaling:4, aim:1, zoning:5 },
-  { name:"Rem",         range:3, aggr:2, compl:4, team:5, tank:1, mobil:4, burst:2, scaling:3, aim:2, zoning:4 },
-  { name:"Silver",      range:4, aggr:2, compl:3, team:4, tank:2, mobil:3, burst:3, scaling:4, aim:3, zoning:3 },
-  { name:"Sinclair",    range:3, aggr:3, compl:5, team:3, tank:1, mobil:3, burst:5, scaling:4, aim:2, zoning:4 },
-  { name:"The Doorman", range:3, aggr:1, compl:4, team:4, tank:1, mobil:4, burst:2, scaling:3, aim:2, zoning:4 },
-  { name:"Venator",     range:3, aggr:2, compl:1, team:3, tank:2, mobil:2, burst:4, scaling:4, aim:5, zoning:3 },
-  { name:"Victor",      range:1, aggr:4, compl:2, team:4, tank:4, mobil:2, burst:2, scaling:5, aim:2, zoning:4 },
-  { name:"Vyper",       range:3, aggr:5, compl:2, team:2, tank:1, mobil:4, burst:3, scaling:4, aim:4, zoning:2 },
+  {name:"Abrams",      range:1,aggr:5,compl:1,team:2,tank:5,mobil:3,burst:3,scaling:3,aim:2,zoning:1,catch:3},
+  {name:"Apollo",      range:2,aggr:4,compl:4,team:2,tank:2,mobil:4,burst:4,scaling:2,aim:2,zoning:1,catch:1},
+  {name:"Bebop",       range:3,aggr:3,compl:3,team:4,tank:3,mobil:2,burst:4,scaling:4,aim:2,zoning:4,catch:5},
+  {name:"Billy",       range:2,aggr:4,compl:3,team:3,tank:3,mobil:2,burst:2,scaling:2,aim:2,zoning:3,catch:3},
+  {name:"Calico",      range:2,aggr:3,compl:4,team:1,tank:1,mobil:5,burst:5,scaling:3,aim:2,zoning:1,catch:1},
+  {name:"Celeste",     range:2,aggr:4,compl:2,team:3,tank:2,mobil:5,burst:4,scaling:4,aim:2,zoning:4,catch:1},
+  {name:"Drifter",     range:3,aggr:3,compl:3,team:2,tank:3,mobil:4,burst:3,scaling:3,aim:3,zoning:2,catch:1},
+  {name:"Dynamo",      range:2,aggr:2,compl:3,team:5,tank:4,mobil:2,burst:3,scaling:5,aim:1,zoning:4,catch:4},
+  {name:"Graves",      range:2,aggr:2,compl:1,team:4,tank:1,mobil:2,burst:2,scaling:4,aim:1,zoning:4,catch:2},
+  {name:"Grey Talon",  range:5,aggr:2,compl:2,team:2,tank:1,mobil:2,burst:3,scaling:3,aim:5,zoning:3,catch:2},
+  {name:"Haze",        range:3,aggr:4,compl:3,team:1,tank:1,mobil:3,burst:4,scaling:4,aim:5,zoning:1,catch:2},
+  {name:"Holliday",    range:2,aggr:4,compl:5,team:4,tank:1,mobil:5,burst:3,scaling:3,aim:3,zoning:4,catch:5},
+  {name:"Infernus",    range:2,aggr:4,compl:2,team:2,tank:3,mobil:3,burst:1,scaling:2,aim:2,zoning:3,catch:1},
+  {name:"Ivy",         range:4,aggr:2,compl:3,team:5,tank:2,mobil:4,burst:2,scaling:3,aim:2,zoning:4,catch:3},
+  {name:"Kelvin",      range:2,aggr:3,compl:3,team:4,tank:5,mobil:3,burst:2,scaling:2,aim:1,zoning:4,catch:4},
+  {name:"Lady Geist",  range:3,aggr:3,compl:2,team:2,tank:3,mobil:2,burst:3,scaling:4,aim:3,zoning:3,catch:1},
+  {name:"Lash",        range:2,aggr:5,compl:4,team:3,tank:2,mobil:5,burst:5,scaling:2,aim:3,zoning:1,catch:4},
+  {name:"McGinnis",    range:4,aggr:1,compl:2,team:4,tank:3,mobil:1,burst:1,scaling:5,aim:2,zoning:5,catch:3},
+  {name:"Mina",        range:2,aggr:5,compl:4,team:2,tank:1,mobil:3,burst:4,scaling:3,aim:3,zoning:1,catch:1},
+  {name:"Mirage",      range:3,aggr:2,compl:3,team:2,tank:2,mobil:3,burst:3,scaling:4,aim:3,zoning:2,catch:2},
+  {name:"Mo & Krill",  range:1,aggr:5,compl:2,team:2,tank:5,mobil:3,burst:2,scaling:2,aim:1,zoning:2,catch:4},
+  {name:"Paige",       range:5,aggr:1,compl:2,team:5,tank:2,mobil:1,burst:1,scaling:4,aim:1,zoning:5,catch:4},
+  {name:"Paradox",     range:3,aggr:3,compl:5,team:4,tank:2,mobil:3,burst:3,scaling:3,aim:3,zoning:3,catch:5},
+  {name:"Pocket",      range:2,aggr:4,compl:3,team:2,tank:2,mobil:4,burst:5,scaling:3,aim:2,zoning:2,catch:1},
+  {name:"Rem",         range:3,aggr:2,compl:4,team:5,tank:1,mobil:4,burst:2,scaling:3,aim:2,zoning:4,catch:3},
+  {name:"Seven",       range:3,aggr:3,compl:3,team:4,tank:2,mobil:2,burst:2,scaling:5,aim:4,zoning:5,catch:1},
+  {name:"Shiv",        range:1,aggr:5,compl:4,team:2,tank:4,mobil:3,burst:4,scaling:2,aim:2,zoning:1,catch:3},
+  {name:"Silver",      range:4,aggr:2,compl:3,team:4,tank:2,mobil:3,burst:3,scaling:4,aim:3,zoning:3,catch:2},
+  {name:"Sinclair",    range:3,aggr:3,compl:5,team:3,tank:1,mobil:3,burst:5,scaling:4,aim:2,zoning:4,catch:3},
+  {name:"The Doorman", range:3,aggr:1,compl:4,team:4,tank:1,mobil:4,burst:2,scaling:3,aim:2,zoning:4,catch:4},
+  {name:"Venator",     range:3,aggr:2,compl:1,team:3,tank:2,mobil:2,burst:4,scaling:4,aim:5,zoning:3,catch:2},
+  {name:"Victor",      range:1,aggr:4,compl:2,team:4,tank:4,mobil:2,burst:2,scaling:5,aim:2,zoning:4,catch:1},
+  {name:"Vindicta",    range:5,aggr:2,compl:2,team:1,tank:1,mobil:4,burst:4,scaling:3,aim:5,zoning:3,catch:2},
+  {name:"Viscous",     range:2,aggr:3,compl:3,team:5,tank:4,mobil:4,burst:2,scaling:3,aim:2,zoning:4,catch:4},
+  {name:"Vyper",       range:3,aggr:5,compl:2,team:2,tank:1,mobil:4,burst:3,scaling:4,aim:4,zoning:2,catch:2},
+  {name:"Warden",      range:3,aggr:3,compl:2,team:4,tank:3,mobil:1,burst:2,scaling:4,aim:4,zoning:3,catch:3},
+  {name:"Wraith",      range:4,aggr:3,compl:3,team:1,tank:1,mobil:4,burst:4,scaling:5,aim:5,zoning:1,catch:3},
+  {name:"Yamato",      range:1,aggr:4,compl:5,team:1,tank:3,mobil:4,burst:4,scaling:3,aim:3,zoning:2,catch:1},
 ];
 
-const AXES_KEYS = ['range','aggr','compl','team','tank','mobil','burst','scaling','aim','zoning'];
-const AXES_RU   = ['Дистанция','Агрессия','Сложность','Командность','Живучесть','Мобильность','Burst урон','Скейлинг','Завис. от аима','Контроль зоны'];
-
+const AXES_KEYS=['range','aggr','compl','team','tank','mobil','burst','scaling','aim','zoning','catch'];
+const AXES_RU=['Дистанция','Агрессия','Сложность','Командность','Живучесть','Мобильность','Burst урон','Скейлинг','Аим','Контроль зоны','Сетап / CC'];
+const AXES_LOW=['Вплотную','Пассивный','Простой','Соло','Стекло','Статичный','DoT','Ранний','Абилки','Фланги','Нет CC'];
+const AXES_HIGH=['Снайпер','Агрессор','Хардкор','Командный','Танк','Мобильный','Ваншот','Лейт-керри','Чистый аим','Контроль зоны','Сетапер'];
 
 // ═══════════════════════════════════════════════════════════════
-//  ВОПРОСЫ — обновлённые Q8, Q9, Q10, Q11, Q16
+//  QUESTIONS — 20
 // ═══════════════════════════════════════════════════════════════
+const QUESTIONS=[
+  // PRIMARY (11)
+  {id:1,axis:0,type:"primary",text:"На какой дистанции тебе комфортнее сражаться?",
+    labels:["Вплотную","Ближняя","Средняя","Дальняя","Снайпер"]},
+  {id:2,axis:1,type:"primary",text:"Как рано ты хочешь начинать драки и играть первым номером?",
+    labels:["Играю сзади","Вторая волна","По ситуации","Ищу драки","Влетаю первым"]},
+  {id:3,axis:2,type:"primary",text:"Какой уровень сложности персонажа тебе подходит?",
+    labels:["Простейший","Простой","Средний","Сложный","Чем сложнее тем лучше"]},
+  {id:4,axis:3,type:"primary",text:"Насколько тебе важно помогать тиммейтам?",
+    labels:["Играю на себя","В основном соло","Баланс","Люблю помогать","Команда = главное"]},
+  {id:5,axis:4,type:"primary",text:"Как ты относишься к получению урона в бою?",
+    labels:["Не хочу получать","Стараюсь избегать","Принимаю если надо","Нормально под огнём","Я танк"]},
+  {id:6,axis:5,type:"primary",text:"Как ты перемещаешься в бою?",
+    labels:["Стою на позиции","Двигаюсь мало","По необходимости","Активно двигаюсь","Постоянно летаю"]},
+  {id:7,axis:6,type:"primary",text:"Как тебе нравится наносить урон?",
+    labels:["DoT / изматывать","Стабильный урон","По ситуации","Быстрые комбо","Мгновенный burst"]},
+  {id:8,axis:7,type:"primary",text:"В какой стадии игры ты чувствуешь себя сильнее всего?",
+    labels:["Ранняя","Ранне-средняя","Середина","Поздне-средняя","Лейт, я монстр"]},
+  {id:9,axis:8,type:"primary",text:"Что для тебя важнее — точная стрельба или способности?",
+    labels:["Способности","Больше абилки","Баланс","Больше стрельба","Аим = оружие"]},
+  {id:10,axis:9,type:"primary",text:"Как ты контролируешь пространство в бою?",
+    labels:["Фланги, обходы","Свободное движение","По ситуации","Давлю на зону","Контроль территории"]},
+  {id:11,axis:10,type:"primary",text:"Насколько тебе нравится сетапить врагов — ловить, контролировать, создавать возможности?",
+    labels:["Не моё","Иногда если есть CC","Баланс урона и CC","Люблю ловить","Сетап = главное"]},
 
-const QUESTIONS = [
-  // ─── Primary (10) ───
-  { id:1, axis:0, type:"primary",
-    text:"На какой дистанции тебе комфортнее сражаться?",
-    labels:["Вплотную","Ближняя","Средняя","Дальняя","Снайпер"] },
-
-  { id:2, axis:1, type:"primary",
-    text:"Когда ты начинаешь искать драки вместо фарма?",
-    labels:["Фармлю до лейта","Фарм, дерусь редко","50 / 50","Ищу драки часто","Дерусь с 1-й минуты"] },
-
-  { id:3, axis:2, type:"primary",
-    text:"Какой уровень сложности персонажа тебе подходит?",
-    labels:["Простейший","Простой","Средний","Сложный","Чем сложнее тем лучше"] },
-
-  { id:4, axis:3, type:"primary",
-    text:"Насколько тебе важно помогать тиммейтам?",
-    labels:["Играю на себя","В основном соло","Баланс","Люблю помогать","Команда = главное"] },
-
-  { id:5, axis:4, type:"primary",
-    text:"Как ты относишься к получению урона в бою?",
-    labels:["Не хочу получать","Стараюсь избегать","Принимаю если надо","Нормально стою под огнём","Я танк"] },
-
-  { id:6, axis:5, type:"primary",
-    text:"Как ты перемещаешься в бою?",
-    labels:["Стою на позиции","Двигаюсь мало","По необходимости","Активно двигаюсь","Постоянно летаю/дэшу"] },
-
-  { id:7, axis:6, type:"primary",
-    text:"Как тебе нравится наносить урон?",
-    labels:["DoT / изматывать","Стабильный урон","Зависит от ситуации","Быстрые комбо","Мгновенный burst"] },
-
-  // ← NEW: Scaling (было Frontline)
-  { id:8, axis:7, type:"primary",
-    text:"В какой стадии игры ты чувствуешь себя сильнее всего?",
-    labels:["Ранняя, доминирую","Ранне-средняя","Середина игры","Поздне-средняя","Лейт, я монстр"] },
-
-  // ← NEW: Aim Reliance (было Roam)
-  { id:9, axis:8, type:"primary",
-    text:"Что для тебя важнее в бою — точная стрельба или способности?",
-    labels:["Способности решают","Больше способности","Баланс","Больше стрельба","Аим = моё оружие"] },
-
-  // ← NEW: Zoning (было Flashy)
-  { id:10, axis:9, type:"primary",
-    text:"Как ты контролируешь пространство в бою?",
-    labels:["Фланги, обходы","Свободное движение","По ситуации","Давление на зону","Контроль территории"] },
-
-  // ─── Cross-checks (8) ───
-
-  // ← NEW: Deadlock-specific вместо "других шутеров"
-  { id:11, axis:0, type:"cross",
-    text:"В какой момент боя ты чувствуешь себя увереннее всего?",
-    labels:["Враг передо мной","На пару дэшей","Средняя дистанция","Вижу издалека","Враг не знает где я"] },
-
-  { id:12, axis:1, type:"cross",
-    text:"Враг с низким HP убегает за вышку. Действия?",
-    labels:["Отпускаю","Скорее отпущу","Зависит от ситуации","Скорее дайвну","Дайвлю 100%"] },
-
-  { id:13, axis:4, type:"cross",
-    text:"Ты умер первым, но команда выиграла бой. Реакция?",
-    labels:["Раздражает","Немного неприятно","Нейтрально","Норм, был полезен","Отлично, помог"] },
-
-  { id:14, axis:3, type:"cross",
-    text:"Что приносит больше удовольствия?",
-    labels:["4 фрага самому","Скорее личные фраги","Оба одинаково","Скорее хороший setup","Идеальный ассист"] },
-
-  { id:15, axis:2, type:"cross",
-    text:"Нравится изучать неочевидные механики и комбо предметов?",
-    labels:["Нет, интуитивно","Базовое изучу","Иногда интересно","Люблю искать фишки","Самое интересное!"] },
-
-  // ← NEW: Zoning cross (было Flashy cross)
-  { id:16, axis:9, type:"cross",
-    text:"Что тебе ближе по духу?",
-    labels:["Нападать, искать углы","Скорее атаковать","Зависит от ситуации","Держать зону, ждать","Моя территория, враг не пройдёт"] },
-
-  { id:17, axis:5, type:"cross",
-    text:"Между боями, когда нет конкретной цели, ты обычно:",
-    labels:["Стою на позиции","Держу зону","И то и другое","Активно перемещаюсь","Бегу, не могу стоять"] },
-
-  { id:18, axis:6, type:"cross",
-    text:"Какой бой тебе нравится больше?",
-    labels:["Длинный, напряжённый","Скорее длинный","Без разницы","Скорее быстрый","Быстрый, один момент"] },
+  // CROSS-CHECKS (9)
+  {id:12,axis:0,type:"cross",text:"В какой момент боя ты чувствуешь себя увереннее всего?",
+    labels:["Враг передо мной","На пару дэшей","Средняя дистанция","Вижу издалека","Враг не знает где я"]},
+  {id:13,axis:1,type:"cross",text:"Враг с низким HP убегает за вышку. Действия?",
+    labels:["Отпускаю","Скорее отпущу","По ситуации","Скорее дайвну","Дайвлю 100%"]},
+  {id:14,axis:4,type:"cross",text:"Ты умер первым, но команда выиграла бой. Реакция?",
+    labels:["Раздражает","Немного неприятно","Нейтрально","Норм, был полезен","Отлично, помог"]},
+  {id:15,axis:3,type:"cross",text:"Что приносит больше удовольствия?",
+    labels:["4 фрага самому","Скорее личные фраги","Оба одинаково","Скорее setup","Идеальный ассист"]},
+  {id:16,axis:2,type:"cross",text:"Нравится изучать неочевидные механики и комбо?",
+    labels:["Нет, интуитивно","Базовое изучу","Иногда","Люблю фишки","Самое интересное!"]},
+  {id:17,axis:9,type:"cross",text:"Что тебе ближе по духу?",
+    labels:["Искать углы","Скорее атаковать","По ситуации","Держать зону","Моя территория"]},
+  {id:18,axis:5,type:"cross",text:"Между боями, когда нет цели, ты обычно:",
+    labels:["Стою на позиции","Держу зону","И то и другое","Перемещаюсь","Бегу, не стою"]},
+  {id:19,axis:6,type:"cross",text:"Какой бой тебе нравится больше?",
+    labels:["Длинный","Скорее длинный","Без разницы","Скорее быстрый","Мгновенный"]},
+  {id:20,axis:10,type:"cross",text:"Ты видишь одинокого врага. Что делаешь?",
+    labels:["Стреляю сразу","Атакую с позиции","По ситуации","Станю перед атакой","Ловлю, зову тиму"]},
 ];
 
-
 // ═══════════════════════════════════════════════════════════════
-//  ENGINE — вычислительный модуль
+//  ENGINE
 // ═══════════════════════════════════════════════════════════════
+const HEROES={};
+HERO_DATA.forEach(h=>{HEROES[h.name]=AXES_KEYS.map(k=>h[k])});
 
-const Engine = {
-
-  transform(value) {
-    return CONFIG.transform[Math.round(value)] ?? value;
-  },
-
-  transformVector(vec) {
-    return vec.map(v => this.transform(v));
-  },
-
-  weightedDistance(a, b) {
-    let sum = 0;
-    for (let i = 0; i < a.length; i++) {
-      sum += CONFIG.weights[i] * (a[i] - b[i]) ** 2;
+const Engine={
+  transform(v){return CONFIG.transform[Math.round(v)]??v},
+  transformVector(v){return v.map(x=>this.transform(x))},
+  weightedDistance(a,b){let s=0;for(let i=0;i<a.length;i++)s+=CONFIG.weights[i]*(a[i]-b[i])**2;return Math.sqrt(s)},
+  maxDistance(){const d=this.transform(5)-this.transform(1);return Math.sqrt(CONFIG.weights.reduce((s,w)=>s+w*d*d,0))},
+  buildRawProfile(ans){
+    const p=new Array(NUM_AXES).fill(null),c=new Array(NUM_AXES).fill(null);
+    QUESTIONS.forEach(q=>{const v=ans[q.id];if(v==null)return;if(q.type==='primary')p[q.axis]=v;else c[q.axis]=v});
+    const prof=[];
+    for(let i=0;i<NUM_AXES;i++){
+      if(p[i]!=null&&c[i]!=null)prof.push(p[i]*CONFIG.primaryWeight+c[i]*CONFIG.crossWeight);
+      else if(p[i]!=null)prof.push(p[i]);else prof.push(3.0);
     }
-    return Math.sqrt(sum);
+    return{profile:prof,primary:p,cross:c};
   },
-
-  maxDistance() {
-    const maxDiff = this.transform(5) - this.transform(1);
-    return Math.sqrt(CONFIG.weights.reduce((s, w) => s + w * maxDiff * maxDiff, 0));
+  analyzeConsistency(p,c){
+    const conflicts=[];let n=0;
+    for(let i=0;i<NUM_AXES;i++){if(p[i]!=null&&c[i]!=null){n++;if(Math.abs(p[i]-c[i])>=CONFIG.conflictThreshold)conflicts.push({axis:i,axisName:AXES_RU[i],primary:p[i],cross:c[i],diff:Math.abs(p[i]-c[i])})}}
+    return{conflicts,consistencyScore:n>0?Math.round((1-conflicts.length/n)*100)/100:1,axesWithBoth:n};
   },
-
-  buildRawProfile(answers) {
-    const primary = new Array(10).fill(null);
-    const cross   = new Array(10).fill(null);
-
-    QUESTIONS.forEach(q => {
-      const val = answers[q.id];
-      if (val == null) return;
-      if (q.type === 'primary') primary[q.axis] = val;
-      else cross[q.axis] = val;
-    });
-
-    const profile = [];
-    for (let i = 0; i < 10; i++) {
-      if (primary[i] != null && cross[i] != null)
-        profile.push(primary[i] * CONFIG.primaryWeight + cross[i] * CONFIG.crossWeight);
-      else if (primary[i] != null) profile.push(primary[i]);
-      else profile.push(3.0);
-    }
-    return { profile, primary, cross };
+  heroToVector(h){return AXES_KEYS.map(k=>h[k])},
+  explainMatch(pv,name){
+    const h=HERO_DATA.find(x=>x.name===name),hv=this.heroToVector(h);
+    const axes=pv.map((v,i)=>{const d=Math.abs(v-hv[i]);let st,ic;if(d<=CONFIG.explain.matchThreshold){st='match';ic='✅'}else if(d<=CONFIG.explain.closeThreshold){st='close';ic='🟡'}else{st='off';ic='❌'}return{name:AXES_RU[i],playerVal:v,heroVal:hv[i],diff:d,status:st,icon:ic}});
+    axes.sort((a,b)=>({match:0,close:1,off:2}[a.status]-{match:0,close:1,off:2}[b.status])||a.diff-b.diff);
+    return{axes,matchCount:axes.filter(a=>a.status==='match').length,closeCount:axes.filter(a=>a.status==='close').length,offCount:axes.filter(a=>a.status==='off').length};
   },
-
-  analyzeConsistency(primary, cross) {
-    const conflicts = [];
-    let axesWithBoth = 0;
-    for (let i = 0; i < 10; i++) {
-      if (primary[i] != null && cross[i] != null) {
-        axesWithBoth++;
-        const diff = Math.abs(primary[i] - cross[i]);
-        if (diff >= CONFIG.conflictThreshold) {
-          conflicts.push({ axis: i, axisName: AXES_RU[i], primary: primary[i], cross: cross[i], diff });
-        }
-      }
-    }
-    return {
-      conflicts,
-      consistencyScore: axesWithBoth > 0 ? Math.round((1 - conflicts.length / axesWithBoth) * 100) / 100 : 1.0,
-      axesWithBoth,
-    };
-  },
-
-  heroToVector(heroObj) {
-    return AXES_KEYS.map(k => heroObj[k]);
-  },
-
-  // ═══ NEW: объяснение совпадения ═══
-  explainMatch(rawPlayerVec, heroName) {
-    const heroObj = HERO_DATA.find(h => h.name === heroName);
-    const heroVec = this.heroToVector(heroObj);
-
-    const axes = rawPlayerVec.map((pVal, i) => {
-      const hVal = heroVec[i];
-      const diff = Math.abs(pVal - hVal);
-
-      let status, icon;
-      if (diff <= CONFIG.explain.matchThreshold) { status = 'match'; icon = '✅'; }
-      else if (diff <= CONFIG.explain.closeThreshold) { status = 'close'; icon = '🟡'; }
-      else { status = 'off'; icon = '❌'; }
-
-      return { name: AXES_RU[i], playerVal: pVal, heroVal: hVal, diff, status, icon };
-    });
-
-    // Сортировка: совпадения → близко → расхождения
-    const order = { match: 0, close: 1, off: 2 };
-    axes.sort((a, b) => order[a.status] - order[b.status] || a.diff - b.diff);
-
-    return {
-      axes,
-      matchCount: axes.filter(a => a.status === 'match').length,
-      closeCount: axes.filter(a => a.status === 'close').length,
-      offCount:   axes.filter(a => a.status === 'off').length,
-    };
-  },
-
-  // ═══ Полный расчёт ═══
-  calculate(answers) {
-    const log = [];
-    log.push('=== DEADLOCK MATCHING ENGINE v2 ===');
-    log.push(`Timestamp: ${new Date().toISOString()}`);
-    log.push(`Axes: ${AXES_KEYS.join(', ')}`);
-    log.push('');
-
-    const { profile: rawProfile, primary, cross } = this.buildRawProfile(answers);
-    log.push('--- Raw Profile ---');
-    AXES_RU.forEach((name, i) => {
-      log.push(`  ${name}: ${rawProfile[i].toFixed(2)}  (primary=${primary[i]??'—'}, cross=${cross[i]??'—'})`);
-    });
-    log.push('');
-
-    const playerVec = this.transformVector(rawProfile);
-    log.push('--- Transformed Profile ---');
-    AXES_RU.forEach((name, i) => {
-      log.push(`  ${name}: ${rawProfile[i].toFixed(2)} → ${playerVec[i].toFixed(2)}  (w=${CONFIG.weights[i]})`);
-    });
-    log.push('');
-
-    const consistency = this.analyzeConsistency(primary, cross);
-    log.push('--- Consistency ---');
-    log.push(`  Score: ${consistency.consistencyScore}  Conflicts: ${consistency.conflicts.length}/${consistency.axesWithBoth}`);
-    consistency.conflicts.forEach(c => log.push(`    ⚠ ${c.axisName}: ${c.primary} vs ${c.cross}`));
-    log.push('');
-
-    const maxDist = this.maxDistance();
-    log.push(`--- Hero Matching (maxDist=${maxDist.toFixed(3)}) ---`);
-
-    const heroResults = HERO_DATA.map(hero => {
-      const heroVec = this.transformVector(this.heroToVector(hero));
-      const dist = this.weightedDistance(playerVec, heroVec);
-      const compatibility = Math.max(0, Math.min(100, Math.round((1 - dist / maxDist) * 1000) / 10));
-      log.push(`  ${hero.name.padEnd(14)} dist=${dist.toFixed(3)}  compat=${compatibility}%`);
-      return { name: hero.name, distance: dist, compatibility };
-    });
-
-    heroResults.sort((a, b) => a.distance - b.distance);
-    log.push('');
-
-    const best = heroResults[0], second = heroResults[1];
-    const delta = second.distance - best.distance;
-
-    let confidenceLevel, confidenceLabel;
-    if (delta >= CONFIG.confidence.highThreshold) { confidenceLevel = 'high'; confidenceLabel = 'Высокая'; }
-    else if (delta >= CONFIG.confidence.mediumThreshold) { confidenceLevel = 'medium'; confidenceLabel = 'Смешанный стиль'; }
-    else { confidenceLevel = 'hybrid'; confidenceLabel = 'Гибридный'; }
-
-    if (consistency.consistencyScore < 0.7 && confidenceLevel === 'high') {
-      confidenceLevel = 'medium';
-      confidenceLabel = 'Смешанный (конфликты)';
-      log.push('  ⚠ Confidence downgraded: low consistency');
-    }
-
-    log.push(`--- Confidence: ${confidenceLevel} (Δ=${delta.toFixed(3)}) ---`);
-    log.push(`  #1 ${best.name} ${best.compatibility}%`);
-    log.push(`  #2 ${second.name} ${second.compatibility}%`);
-
-    // Объяснения для топ-5
-    const alternatives = heroResults.slice(0, 5).map(h => ({
-      name: h.name,
-      compatibility: h.compatibility,
-      explain: this.explainMatch(rawProfile, h.name),
-    }));
-
-    return {
-      bestHero: best.name,
-      compatibility: best.compatibility,
-      confidence: { level: confidenceLevel, label: confidenceLabel, delta: Math.round(delta * 1000) / 1000 },
-      consistency: { score: consistency.consistencyScore, conflicts: consistency.conflicts },
-      alternatives,
-      worst: heroResults.slice(-3).map(h => ({ name: h.name, compatibility: h.compatibility })),
-      playerVector: rawProfile,
-      playerVectorTransformed: playerVec,
-      conflictedAxes: consistency.conflicts.map(c => c.axis),
-      log: log.join('\n'),
-    };
+  calculate(ans){
+    const log=[];
+    const{profile:raw,primary:pr,cross:cr}=this.buildRawProfile(ans);
+    const pVec=this.transformVector(raw);
+    const con=this.analyzeConsistency(pr,cr);
+    const mx=this.maxDistance();
+    AXES_RU.forEach((n,i)=>log.push(`${n}: raw=${raw[i].toFixed(2)} t=${pVec[i].toFixed(2)} w=${CONFIG.weights[i]}`));
+    const hr=HERO_DATA.map(h=>{const hv=this.transformVector(this.heroToVector(h));const d=this.weightedDistance(pVec,hv);const c=Math.max(0,Math.min(100,Math.round((1-d/mx)*1000)/10));return{name:h.name,distance:d,compatibility:c}});
+    hr.sort((a,b)=>a.distance-b.distance);
+    const delta=hr[1].distance-hr[0].distance;
+    let cl,clbl;
+    if(delta>=CONFIG.confidence.highThreshold){cl='high';clbl='Высокая'}
+    else if(delta>=CONFIG.confidence.mediumThreshold){cl='medium';clbl='Смешанный стиль'}
+    else{cl='hybrid';clbl='Гибридный'}
+    if(con.consistencyScore<0.7&&cl==='high'){cl='medium';clbl='Смешанный (конфликты)'}
+    const alts=hr.slice(0,5).map(h=>({name:h.name,compatibility:h.compatibility,explain:this.explainMatch(raw,h.name)}));
+    return{bestHero:hr[0].name,compatibility:hr[0].compatibility,confidence:{level:cl,label:clbl,delta:Math.round(delta*1000)/1000},consistency:{score:con.consistencyScore,conflicts:con.conflicts},alternatives:alts,worst:hr.slice(-3).map(h=>({name:h.name,compatibility:h.compatibility})),playerVector:raw,conflictedAxes:con.conflicts.map(c=>c.axis),log:log.join('\n')};
   },
 };
 
-
 // ═══════════════════════════════════════════════════════════════
-//  UI STATE
+//  UI
 // ═══════════════════════════════════════════════════════════════
+let currentQ=0,answers={},lastResult=null;
 
-let currentQ = 0;
-let answers = {};
-let lastResult = null;
-
-
-// ═══════════════════════════════════════════════════════════════
-//  QUIZ RENDERING
-// ═══════════════════════════════════════════════════════════════
-
-function renderQuestion(idx) {
-  const q = QUESTIONS[idx];
-  const selected = answers[q.id] || 0;
-
-  let opts = '';
-  for (let v = 1; v <= 5; v++) {
-    opts += `
-      <div class="scale-option ${selected===v?'selected':''}"
-           onclick="selectAnswer(${q.id},${v},this)">
-        <div class="scale-option-btn">${v}</div>
-        <div class="scale-option-label">${q.labels[v-1]}</div>
-      </div>`;
-  }
-
-  document.getElementById('quizArea').innerHTML = `
-    <div class="question-card">
-      <div class="question-number">Вопрос ${idx+1} / 18 ${q.type==='cross'?'· уточняющий':''}</div>
-      <div class="question-text">${q.text}</div>
-      <div class="scale-container">${opts}</div>
-    </div>`;
-
+function renderQuestion(idx){
+  const q=QUESTIONS[idx],sel=answers[q.id]||0;
+  let opts='';
+  for(let v=1;v<=5;v++)opts+=`<div class="scale-option ${sel===v?'selected':''}" onclick="selectAnswer(${q.id},${v},this)"><div class="scale-option-btn">${v}</div><div class="scale-option-label">${q.labels[v-1]}</div></div>`;
+  document.getElementById('quizArea').innerHTML=`<div class="question-card"><div class="question-number">Вопрос ${idx+1} / ${TOTAL_Q} ${q.type==='cross'?'· проверочный':''}</div><div class="question-text">${q.text}</div><div class="scale-container">${opts}</div></div>`;
   updateProgress();
-  document.getElementById('btnBack').disabled = (idx === 0);
-  document.getElementById('btnNext').disabled = !answers[q.id];
-  document.getElementById('btnNext').textContent =
-    (idx === QUESTIONS.length-1 && answers[q.id]) ? 'Показать результат →' : 'Далее →';
+  document.getElementById('btnBack').disabled=(idx===0);
+  document.getElementById('btnNext').disabled=!answers[q.id];
+  document.getElementById('btnNext').textContent=(idx===QUESTIONS.length-1&&answers[q.id])?'Узнать результат →':'Далее →';
 }
 
-function selectAnswer(qId, value, el) {
-  answers[qId] = value;
-  el.parentNode.querySelectorAll('.scale-option').forEach(s => s.classList.remove('selected'));
+function selectAnswer(qId,val,el){
+  answers[qId]=val;
+  el.parentNode.querySelectorAll('.scale-option').forEach(s=>s.classList.remove('selected'));
   el.classList.add('selected');
-  document.getElementById('btnNext').disabled = false;
+  document.getElementById('btnNext').disabled=false;
   updateProgress();
-  if (currentQ === QUESTIONS.length-1)
-    document.getElementById('btnNext').textContent = 'Показать результат →';
+  if(currentQ===QUESTIONS.length-1)document.getElementById('btnNext').textContent='Узнать результат →';
 }
 
-function updateProgress() {
-  const count = Object.keys(answers).length;
-  const pct = Math.round((count/18)*100);
-  document.getElementById('progressLabel').textContent = `Вопрос ${currentQ+1} из 18`;
-  document.getElementById('progressPct').textContent = `${pct}%`;
-  document.getElementById('progressFill').style.width = `${pct}%`;
+function updateProgress(){
+  const c=Object.keys(answers).length,p=Math.round((c/TOTAL_Q)*100);
+  document.getElementById('progressLabel').textContent=`Вопрос ${currentQ+1} из ${TOTAL_Q}`;
+  document.getElementById('progressPct').textContent=`${p}%`;
+  document.getElementById('progressFill').style.width=`${p}%`;
 }
 
-function goNext() {
-  if (currentQ < QUESTIONS.length-1) { currentQ++; renderQuestion(currentQ); window.scrollTo({top:0,behavior:'smooth'}); }
-  else showResults();
-}
+function goNext(){if(currentQ<QUESTIONS.length-1){currentQ++;renderQuestion(currentQ);window.scrollTo({top:0,behavior:'smooth'})}else showResults()}
+function goBack(){if(currentQ>0){currentQ--;renderQuestion(currentQ)}}
 
-function goBack() {
-  if (currentQ > 0) { currentQ--; renderQuestion(currentQ); }
-}
+function showResults(){
+  document.getElementById('quizArea').style.display='none';
+  document.getElementById('navButtons').style.display='none';
+  document.getElementById('progressWrap').style.display='none';
+  const r=Engine.calculate(answers);lastResult=r;
 
+  document.getElementById('resultsSubtitle').textContent=`${r.bestHero} · ${r.compatibility}% совпадение`;
 
-// ═══════════════════════════════════════════════════════════════
-//  RESULTS RENDERING
-// ═══════════════════════════════════════════════════════════════
+  const cc=`confidence-${r.confidence.level}`;
+  const cs=r.consistency.score>=.85?'consistency-good':r.consistency.score>=.6?'consistency-ok':'consistency-conflict';
+  const csL=r.consistency.score>=.85?'Высокая':r.consistency.score>=.6?'Средняя':'Низкая';
+  document.getElementById('metaCards').innerHTML=`
+    <div class="meta-card"><div class="meta-card-label">Уверенность</div><div class="meta-card-value ${cc}">${r.confidence.label}</div><div class="meta-card-hint">Δ ${r.confidence.delta.toFixed(2)}</div></div>
+    <div class="meta-card"><div class="meta-card-label">Согласованность</div><div class="meta-card-value ${cs}">${csL} (${Math.round(r.consistency.score*100)}%)</div><div class="meta-card-hint">${r.consistency.conflicts.length} конфликт(ов)</div></div>
+    <div class="meta-card"><div class="meta-card-label">Совпадение</div><div class="meta-card-value" style="color:var(--gold)">${r.compatibility}%</div><div class="meta-card-hint">с ${r.bestHero}</div></div>`;
 
-function showResults() {
-  document.getElementById('quizArea').style.display = 'none';
-  document.getElementById('navButtons').style.display = 'none';
-  document.getElementById('progressWrap').style.display = 'none';
+  const cEl=document.getElementById('conflictsSection');
+  if(r.consistency.conflicts.length>0){cEl.style.display='block';document.getElementById('conflictsList').innerHTML=r.consistency.conflicts.map(c=>`<div class="conflict-item"><span class="conflict-icon">⚠</span><span class="conflict-axis">${c.axisName}</span><span class="conflict-detail">Основной: ${c.primary} → Проверочный: ${c.cross} (Δ${c.diff})</span></div>`).join('')}else cEl.style.display='none';
 
-  const result = Engine.calculate(answers);
-  lastResult = result;
+  document.getElementById('profileBars').innerHTML=r.playerVector.map((v,i)=>{
+    const ic=r.conflictedAxes.includes(i);const wl=CONFIG.weights[i]!==1?`×${CONFIG.weights[i]}`:'';
+    return`<div class="profile-axis"><span class="axis-name">${AXES_RU[i]}</span><div class="axis-bar-bg"><div class="axis-bar-fill ${ic?'conflicted':''}" style="width:${(v/5)*100}%"></div></div><span class="axis-value">${v.toFixed(1)}</span><span class="axis-weight">${wl}</span></div>`;
+  }).join('');
 
-  // Subtitle
-  document.getElementById('resultsSubtitle').textContent =
-    `${result.bestHero} · ${result.compatibility}% совпадение`;
+  document.getElementById('heroCards').innerHTML=r.alternatives.map((h,i)=>{
+    const ex=h.explain;const sum=`✅ ${ex.matchCount}  🟡 ${ex.closeCount}  ❌ ${ex.offCount}`;
+    const rows=ex.axes.map(a=>`<div class="explain-row"><span class="explain-icon">${a.icon}</span><span class="explain-axis-name">${a.name}</span><span class="explain-values">ты: <span class="explain-player">${a.playerVal.toFixed(1)}</span> <span style="color:var(--text-muted)">│</span> герой: <span class="explain-hero">${a.heroVal}</span></span><span class="explain-diff">Δ${a.diff.toFixed(1)}</span></div>`).join('');
+    return`<div class="hero-entry ${i===0?'top-pick':''}"><div class="hero-card"><div class="hero-rank">${i+1}</div><div class="hero-info"><div class="hero-name">${h.name}</div><div class="hero-match-bar-bg"><div class="hero-match-bar-fill" style="width:${h.compatibility}%"></div></div></div><div class="hero-pct">${h.compatibility}%</div></div><div class="hero-explain-area"><button class="hero-explain-toggle" onclick="toggleExplain('ex-${i}',this)">▸ Почему ${h.name}?</button><div class="hero-explain" id="ex-${i}" style="display:none"><div class="explain-summary">${sum}</div>${rows}</div></div></div>`;
+  }).join('');
 
-  // Meta cards
-  const confClass = `confidence-${result.confidence.level}`;
-  const consClass = result.consistency.score >= 0.85 ? 'consistency-good'
-    : result.consistency.score >= 0.6 ? 'consistency-ok' : 'consistency-conflict';
-  const consLabel = result.consistency.score >= 0.85 ? 'Высокая'
-    : result.consistency.score >= 0.6 ? 'Средняя' : 'Низкая';
+  document.getElementById('worstHeroes').innerHTML=r.worst.map(h=>`<div class="worst-hero"><span>✗ ${h.name}</span><span>${h.compatibility}%</span></div>`).join('');
 
-  document.getElementById('metaCards').innerHTML = `
-    <div class="meta-card">
-      <div class="meta-card-label">Уверенность</div>
-      <div class="meta-card-value ${confClass}">${result.confidence.label}</div>
-      <div class="meta-card-hint">Δ = ${result.confidence.delta.toFixed(2)}</div>
-    </div>
-    <div class="meta-card">
-      <div class="meta-card-label">Согласованность</div>
-      <div class="meta-card-value ${consClass}">${consLabel} (${Math.round(result.consistency.score*100)}%)</div>
-      <div class="meta-card-hint">${result.consistency.conflicts.length} конфликт(ов)</div>
-    </div>
-    <div class="meta-card">
-      <div class="meta-card-label">Совпадение</div>
-      <div class="meta-card-value" style="color:#f5c542">${result.compatibility}%</div>
-      <div class="meta-card-hint">с ${result.bestHero}</div>
-    </div>`;
-
-  // Conflicts
-  const cEl = document.getElementById('conflictsSection');
-  if (result.consistency.conflicts.length > 0) {
-    cEl.style.display = 'block';
-    document.getElementById('conflictsList').innerHTML =
-      result.consistency.conflicts.map(c => `
-        <div class="conflict-item">
-          <span class="conflict-icon">⚠</span>
-          <span class="conflict-axis">${c.axisName}</span>
-          <span class="conflict-detail">Основной: ${c.primary} → Проверочный: ${c.cross} (разница ${c.diff})</span>
-        </div>`).join('');
-  } else { cEl.style.display = 'none'; }
-
-  // Profile
-  document.getElementById('profileBars').innerHTML =
-    result.playerVector.map((val, i) => {
-      const isConf = result.conflictedAxes.includes(i);
-      const wLabel = CONFIG.weights[i] !== 1.0 ? `×${CONFIG.weights[i]}` : '';
-      return `
-        <div class="profile-axis">
-          <span class="axis-name">${AXES_RU[i]}</span>
-          <div class="axis-bar-bg">
-            <div class="axis-bar-fill ${isConf?'conflicted':''}" style="width:${(val/5)*100}%"></div>
-          </div>
-          <span class="axis-value">${val.toFixed(1)}</span>
-          <span class="axis-weight">${wLabel}</span>
-        </div>`;
-    }).join('');
-
-  // Hero cards with explanations
-  document.getElementById('heroCards').innerHTML =
-    result.alternatives.map((h, i) => {
-      const exp = h.explain;
-      const summaryText = `Совпадает: ${exp.matchCount}  Близко: ${exp.closeCount}  Расхождение: ${exp.offCount}`;
-
-      const explainRows = exp.axes.map(a => `
-        <div class="explain-row">
-          <span class="explain-icon">${a.icon}</span>
-          <span class="explain-axis-name">${a.name}</span>
-          <span class="explain-values">
-            ты: <span class="explain-player">${a.playerVal.toFixed(1)}</span>
-            <span style="color:#444">│</span>
-            герой: <span class="explain-hero">${a.heroVal}</span>
-          </span>
-          <span class="explain-diff">Δ ${a.diff.toFixed(1)}</span>
-        </div>`).join('');
-
-      return `
-        <div class="hero-entry ${i===0?'top-pick':''}">
-          <div class="hero-card">
-            <div class="hero-rank">${i+1}</div>
-            <div class="hero-info">
-              <div class="hero-name">${h.name}</div>
-              <div class="hero-match-bar-bg">
-                <div class="hero-match-bar-fill" style="width:${h.compatibility}%"></div>
-              </div>
-            </div>
-            <div class="hero-pct">${h.compatibility}%</div>
-          </div>
-          <div class="hero-explain-area">
-            <button class="hero-explain-toggle" onclick="toggleExplain('explain-${i}',this)">
-              ▸ Почему ${h.name}?
-            </button>
-            <div class="hero-explain" id="explain-${i}" style="display:none">
-              <div class="explain-summary">${summaryText}</div>
-              ${explainRows}
-            </div>
-          </div>
-        </div>`;
-    }).join('');
-
-  // Worst
-  document.getElementById('worstHeroes').innerHTML =
-    result.worst.map(h => `
-      <div class="worst-hero"><span>✗ ${h.name}</span><span>${h.compatibility}%</span></div>`).join('');
-
-  // Select
-  const sel = document.getElementById('realMainSelect');
-  sel.innerHTML = '<option value="">— выбери —</option>' +
-    HERO_DATA.map(h=>h.name).sort().map(n=>`<option value="${n}">${n}</option>`).join('');
-
-  // Debug
-  document.getElementById('debugLog').textContent = result.log;
-
-  document.getElementById('results').style.display = 'block';
+  const heroNames=HERO_DATA.map(h=>h.name).sort();
+  document.getElementById('realMainSelect').innerHTML='<option value="">— выбери —</option>'+heroNames.map(n=>`<option value="${n}">${n}</option>`).join('');
+  document.getElementById('calHeroSelect').innerHTML='<option value="">— выбери своего мейна —</option>'+heroNames.map(n=>`<option value="${n}">${n}</option>`).join('');
+  renderCalAxes();
+  document.getElementById('debugLog').textContent=r.log;
+  document.getElementById('results').style.display='block';
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-function toggleExplain(id, btn) {
-  const el = document.getElementById(id);
-  const visible = el.style.display !== 'none';
-  el.style.display = visible ? 'none' : 'block';
-  btn.textContent = btn.textContent.replace(visible ? '▾' : '▸', visible ? '▸' : '▾');
+function toggleExplain(id,btn){const el=document.getElementById(id);const v=el.style.display!=='none';el.style.display=v?'none':'block';btn.textContent=btn.textContent.replace(v?'▾':'▸',v?'▸':'▾')}
+
+// ═══════════════════════════════════════════════════════════════
+//  CALIBRATION FORM
+// ═══════════════════════════════════════════════════════════════
+let calAnswers={};
+
+function renderCalAxes(){
+  let html='';
+  for(let i=0;i<NUM_AXES;i++){
+    let btns='';
+    for(let v=1;v<=5;v++){
+      btns+=`<div class="cal-btn ${calAnswers[i]===v?'selected':''}" onclick="calSelect(${i},${v},this)">${v}</div>`;
+    }
+    html+=`<div class="cal-axis-row">
+      <span class="cal-axis-name">${AXES_RU[i]}</span>
+      <div class="cal-btns">${btns}</div>
+      <div class="cal-labels"><span>${AXES_LOW[i]}</span><span>${AXES_HIGH[i]}</span></div>
+    </div>`;
+  }
+  document.getElementById('calAxes').innerHTML=html;
 }
 
+function calSelect(axis,val,el){
+  calAnswers[axis]=val;
+  el.parentNode.querySelectorAll('.cal-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function submitCalibration(){
+  const hero=document.getElementById('calHeroSelect').value;
+  if(!hero){document.getElementById('calMsg').textContent='Выбери героя!';return}
+  const filled=Object.keys(calAnswers).length;
+  if(filled<NUM_AXES){document.getElementById('calMsg').textContent=`Заполни все ${NUM_AXES} шкал! (заполнено: ${filled})`;return}
+
+  const payload={
+    hero,
+    axes:{},
+    timestamp:new Date().toISOString(),
+    testResult:lastResult?{bestHero:lastResult.bestHero,compatibility:lastResult.compatibility}:null,
+  };
+  AXES_KEYS.forEach((k,i)=>payload.axes[k]=calAnswers[i]);
+
+  console.log('📊 Calibration data:',JSON.stringify(payload,null,2));
+
+  // Здесь подключить бэкенд:
+  // fetch('/api/calibrate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+
+  document.getElementById('calMsg').textContent='✓ Спасибо! Данные отправлены.';
+  document.getElementById('calMsg').style.color='var(--teal-light)';
+}
 
 // ═══════════════════════════════════════════════════════════════
 //  UTILITIES
 // ═══════════════════════════════════════════════════════════════
-
-function setFeedback(btn, agreed) {
-  document.querySelectorAll('.fb-btn').forEach(b => b.classList.remove('active'));
+function setFeedback(btn,agreed){
+  document.querySelectorAll('.fb-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  console.log('📊 Feedback:', {
-    answers, agreed,
-    realMain: document.getElementById('realMainSelect').value,
-    result: lastResult ? { bestHero: lastResult.bestHero, compatibility: lastResult.compatibility } : null,
-  });
+  console.log('📊 Feedback:',{answers,agreed,realMain:document.getElementById('realMainSelect').value});
 }
 
-function exportProfile() {
-  if (!lastResult) return;
-  const r = lastResult;
-  const lines = [
-    `🎯 Deadlock Main Test`,
-    ``, `Герой: ${r.bestHero} (${r.compatibility}%)`,
-    `Уверенность: ${r.confidence.label}`,
-    `Согласованность: ${Math.round(r.consistency.score*100)}%`,
-    ``, `Профиль:`,
-    ...AXES_RU.map((n,i) => `  ${n}: ${r.playerVector[i].toFixed(1)}/5`),
-    ``, `Топ-5:`,
-    ...r.alternatives.map((h,i) => `  ${i+1}. ${h.name} — ${h.compatibility}%`),
-  ];
-  navigator.clipboard.writeText(lines.join('\n'))
-    .then(() => {
-      const b = document.querySelector('.export-btn');
-      b.textContent = '✓ Скопировано!';
-      setTimeout(() => b.textContent = '📋 Скопировать профиль', 2000);
-    }).catch(() => alert(lines.join('\n')));
+function exportProfile(){
+  if(!lastResult)return;const r=lastResult;
+  const l=[`◆ DEADLOCK — Результат`,``,`Герой: ${r.bestHero} (${r.compatibility}%)`,`Уверенность: ${r.confidence.label}`,`Согласованность: ${Math.round(r.consistency.score*100)}%`,``,`Профиль:`,...AXES_RU.map((n,i)=>`  ${n}: ${r.playerVector[i].toFixed(1)}/5`),``,`Топ-5:`,...r.alternatives.map((h,i)=>`  ${i+1}. ${h.name} — ${h.compatibility}%`)];
+  navigator.clipboard.writeText(l.join('\n')).then(()=>{const b=document.querySelector('.export-btn');b.textContent='✓ Скопировано';setTimeout(()=>b.textContent='📋 Скопировать',2000)}).catch(()=>alert(l.join('\n')));
 }
 
-function restart() {
-  answers = {}; currentQ = 0; lastResult = null;
-  document.getElementById('results').style.display = 'none';
-  document.getElementById('quizArea').style.display = 'block';
-  document.getElementById('navButtons').style.display = 'flex';
-  document.getElementById('progressWrap').style.display = 'block';
-  renderQuestion(0);
-  window.scrollTo({top:0,behavior:'smooth'});
+function restart(){
+  answers={};currentQ=0;lastResult=null;calAnswers={};
+  document.getElementById('results').style.display='none';
+  document.getElementById('quizArea').style.display='block';
+  document.getElementById('navButtons').style.display='flex';
+  document.getElementById('progressWrap').style.display='block';
+  renderQuestion(0);window.scrollTo({top:0,behavior:'smooth'});
 }
 
 renderQuestion(0);
