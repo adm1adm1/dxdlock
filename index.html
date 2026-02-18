@@ -1,420 +1,300 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Deadlock — Найди мейна</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --gold:#c8a44e;--gold-light:#e8d48b;--gold-dark:#8a6d2b;
-            --gold-glow:rgba(200,164,78,0.15);
-            --teal:#3a8a7a;--teal-light:#5ab8a6;
-            --red:#a04040;--red-light:#d06060;
-            --bg-deep:#08080c;--bg-card:#0e0e14;
-            --border:rgba(200,164,78,0.12);--border-hover:rgba(200,164,78,0.3);
-            --text:#c8c0b0;--text-dim:#6a6458;--text-muted:#4a453d;
-        }
-        *{margin:0;padding:0;box-sizing:border-box}
-        body{font-family:'Inter',sans-serif;background:var(--bg-deep);color:var(--text);min-height:100vh;overflow-x:hidden}
-        body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(200,164,78,.04) 0%,transparent 60%),radial-gradient(ellipse at 0% 100%,rgba(58,138,122,.03) 0%,transparent 50%);pointer-events:none;z-index:0}
-        .container{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:40px 20px 80px}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deadlock — Найди мейна</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --gold:#c8a44e;--gold-light:#e8d48b;--gold-dark:#8a6d2b;
+      --gold-glow:rgba(200,164,78,0.15);
+      --teal:#3a8a7a;--teal-light:#5ab8a6;
+      --red:#a04040;--red-light:#d06060;
+      --bg-deep:#08080c;--bg-card:#0e0e14;
+      --border:rgba(200,164,78,0.12);--border-hover:rgba(200,164,78,0.3);
+      --text:#c8c0b0;--text-dim:#6a6458;--text-muted:#4a453d;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Inter',sans-serif;background:var(--bg-deep);color:var(--text);min-height:100vh;overflow-x:hidden}
+    body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(200,164,78,.04) 0%,transparent 60%),radial-gradient(ellipse at 0% 100%,rgba(58,138,122,.03) 0%,transparent 50%);pointer-events:none;z-index:0}
+    .container{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:40px 20px 80px}
 
-        /* ═══ HEADER ═══ */
-        .header{text-align:center;margin-bottom:48px}
-        .header-emblem::before{content:'◆';font-size:36px;color:var(--gold);text-shadow:0 0 30px rgba(200,164,78,.3)}
-        .header h1{font-family:'Cinzel',serif;font-size:2.2rem;font-weight:900;letter-spacing:5px;text-transform:uppercase;color:var(--gold);text-shadow:0 0 40px rgba(200,164,78,.2);margin-top:12px}
-        .header-subtitle{font-family:'Cinzel',serif;font-size:.8rem;letter-spacing:3px;text-transform:uppercase;color:var(--gold-dark);margin-top:6px}
-        .deco-line{display:flex;align-items:center;justify-content:center;gap:12px;margin:16px 0}
-        .deco-line::before,.deco-line::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--gold-dark),transparent)}
-        .deco-diamond{width:6px;height:6px;background:var(--gold-dark);transform:rotate(45deg);flex-shrink:0}
-        .header p{margin-top:12px;color:var(--text-dim);font-size:.85rem;letter-spacing:1px}
+    .header{text-align:center;margin-bottom:48px}
+    .header-emblem::before{content:'◆';font-size:36px;color:var(--gold);text-shadow:0 0 30px rgba(200,164,78,.3)}
+    .header h1{font-family:'Cinzel',serif;font-size:2.2rem;font-weight:900;letter-spacing:5px;text-transform:uppercase;color:var(--gold);text-shadow:0 0 40px rgba(200,164,78,.2);margin-top:12px}
+    .header-subtitle{font-family:'Cinzel',serif;font-size:.8rem;letter-spacing:3px;text-transform:uppercase;color:var(--gold-dark);margin-top:6px}
+    .deco-line{display:flex;align-items:center;justify-content:center;gap:12px;margin:16px 0}
+    .deco-line::before,.deco-line::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--gold-dark),transparent)}
+    .deco-diamond{width:6px;height:6px;background:var(--gold-dark);transform:rotate(45deg);flex-shrink:0}
+    .header p{margin-top:12px;color:var(--text-dim);font-size:.85rem;letter-spacing:1px}
 
-        /* ═══ PROGRESS ═══ */
-        .progress-wrap{margin-bottom:32px}
-        .progress-info{display:flex;justify-content:space-between;font-size:.72rem;color:var(--text-dim);margin-bottom:8px;font-family:'Cinzel',serif;letter-spacing:1px;text-transform:uppercase}
-        .progress-bar{width:100%;height:3px;background:rgba(200,164,78,.1);overflow:hidden}
-        .progress-fill{height:100%;background:linear-gradient(90deg,var(--gold-dark),var(--gold),var(--gold-dark));transition:width .4s ease}
+    .progress-wrap{margin-bottom:32px}
+    .progress-info{display:flex;justify-content:space-between;font-size:.72rem;color:var(--text-dim);margin-bottom:8px;font-family:'Cinzel',serif;letter-spacing:1px;text-transform:uppercase}
+    .progress-bar{width:100%;height:3px;background:rgba(200,164,78,.1);overflow:hidden}
+    .progress-fill{height:100%;background:linear-gradient(90deg,var(--gold-dark),var(--gold),var(--gold-dark));transition:width .4s ease}
 
-        /* ═══ QUESTION CARD ═══ */
-        .question-card{background:var(--bg-card);border:1px solid var(--border);padding:32px 28px;margin-bottom:20px}
-        .question-number{font-family:'Cinzel',serif;font-size:.68rem;font-weight:700;color:var(--gold-dark);text-transform:uppercase;letter-spacing:2px;margin-bottom:14px}
-        .question-text{font-size:1.05rem;font-weight:600;line-height:1.6;margin-bottom:28px}
+    .question-card{background:var(--bg-card);border:1px solid var(--border);padding:32px 28px;margin-bottom:20px}
+    .question-number{font-family:'Cinzel',serif;font-size:.68rem;font-weight:700;color:var(--gold-dark);text-transform:uppercase;letter-spacing:2px;margin-bottom:14px}
+    .question-text{font-size:1.05rem;font-weight:600;line-height:1.6;margin-bottom:28px}
 
-        /* ═══ SCALE ═══ */
-        .scale-container{display:flex;gap:8px;justify-content:center}
-        .scale-option{display:flex;flex-direction:column;align-items:center;flex:1;max-width:130px;cursor:pointer}
-        .scale-option-btn{
-            width:54px;height:54px;border-radius:10px;
-            border:1px solid rgba(200,164,78,.12);
-            background:rgba(200,164,78,.03);
-            color:var(--text-dim);font-family:'Cinzel',serif;
-            font-size:1.1rem;font-weight:700;cursor:pointer;
-            transition:all .2s;display:flex;align-items:center;
-            justify-content:center;margin-bottom:8px;
-        }
-        .scale-option:hover .scale-option-btn{border-color:var(--gold-dark);background:rgba(200,164,78,.08);color:var(--gold-light);transform:translateY(-2px)}
-        .scale-option.selected .scale-option-btn{border-color:var(--gold);background:rgba(200,164,78,.15);color:var(--gold);box-shadow:0 0 20px rgba(200,164,78,.12)}
-        .scale-option-label{font-size:.62rem;color:var(--text-muted);text-align:center;line-height:1.3;min-height:28px;display:flex;align-items:flex-start;justify-content:center;transition:color .2s}
-        .scale-option.selected .scale-option-label{color:var(--gold)}
-        .scale-option:hover .scale-option-label{color:var(--text-dim)}
+    .scale-container{display:flex;gap:8px;justify-content:center}
+    .scale-option{display:flex;flex-direction:column;align-items:center;flex:1;max-width:130px;cursor:pointer}
+    .scale-option-btn{width:54px;height:54px;border-radius:10px;border:1px solid rgba(200,164,78,.12);background:rgba(200,164,78,.03);color:var(--text-dim);font-family:'Cinzel',serif;font-size:1.1rem;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;margin-bottom:8px}
+    .scale-option:hover .scale-option-btn{border-color:var(--gold-dark);background:rgba(200,164,78,.08);color:var(--gold-light);transform:translateY(-2px)}
+    .scale-option.selected .scale-option-btn{border-color:var(--gold);background:rgba(200,164,78,.15);color:var(--gold);box-shadow:0 0 20px rgba(200,164,78,.12)}
+    .scale-option-label{font-size:.62rem;color:var(--text-muted);text-align:center;line-height:1.3;min-height:28px;display:flex;align-items:flex-start;justify-content:center;transition:color .2s}
+    .scale-option.selected .scale-option-label{color:var(--gold)}
+    .scale-option:hover .scale-option-label{color:var(--text-dim)}
 
-        /* ═══ NAV ═══ */
-        .nav-buttons{display:flex;gap:12px;margin-top:16px;justify-content:center}
-        .btn{padding:12px 32px;border:1px solid var(--border);font-family:'Cinzel',serif;font-size:.8rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s;background:transparent}
-        .btn:disabled{opacity:.25;cursor:not-allowed}
-        .btn-back{color:var(--text-dim);border-color:rgba(200,164,78,.08)}
-        .btn-back:hover:not(:disabled){border-color:var(--border-hover);color:var(--text)}
-        .btn-next{background:linear-gradient(180deg,rgba(200,164,78,.12),rgba(200,164,78,.04));color:var(--gold);border-color:var(--gold-dark)}
-        .btn-next:hover:not(:disabled){background:linear-gradient(180deg,rgba(200,164,78,.2),rgba(200,164,78,.08));box-shadow:0 0 20px rgba(200,164,78,.1)}
-        .btn-next:disabled{background:transparent;color:var(--text-muted);border-color:rgba(200,164,78,.06)}
+    .nav-buttons{display:flex;gap:12px;margin-top:16px;justify-content:center}
+    .btn{padding:12px 32px;border:1px solid var(--border);font-family:'Cinzel',serif;font-size:.8rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s;background:transparent}
+    .btn:disabled{opacity:.25;cursor:not-allowed}
+    .btn-back{color:var(--text-dim);border-color:rgba(200,164,78,.08)}
+    .btn-back:hover:not(:disabled){border-color:var(--border-hover);color:var(--text)}
+    .btn-next{background:linear-gradient(180deg,rgba(200,164,78,.12),rgba(200,164,78,.04));color:var(--gold);border-color:var(--gold-dark)}
+    .btn-next:hover:not(:disabled){background:linear-gradient(180deg,rgba(200,164,78,.2),rgba(200,164,78,.08));box-shadow:0 0 20px rgba(200,164,78,.1)}
+    .btn-next:disabled{background:transparent;color:var(--text-muted);border-color:rgba(200,164,78,.06)}
 
-        /* ═══ RESULTS ═══ */
-        #results{display:none}
-        .results-title{text-align:center;font-family:'Cinzel',serif;font-size:1.5rem;font-weight:900;letter-spacing:4px;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
-        .results-subtitle{text-align:center;color:var(--text-dim);margin-bottom:10px;font-size:.88rem}
+    #results{display:none}
+    .results-title{text-align:center;font-family:'Cinzel',serif;font-size:1.5rem;font-weight:900;letter-spacing:4px;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+    .results-subtitle{text-align:center;color:var(--text-dim);margin-bottom:10px;font-size:.88rem}
 
-        .meta-cards{display:flex;gap:10px;margin-bottom:24px}
-        .meta-card{flex:1;background:var(--bg-card);border:1px solid var(--border);padding:16px;text-align:center}
-        .meta-card-label{font-family:'Cinzel',serif;font-size:.6rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);margin-bottom:6px}
-        .meta-card-value{font-size:1.1rem;font-weight:700}
-        .meta-card-hint{font-size:.6rem;color:var(--text-muted);margin-top:4px}
-        .confidence-high{color:var(--teal-light)}.confidence-medium{color:var(--gold)}.confidence-hybrid{color:var(--red-light)}
-        .consistency-good{color:var(--teal-light)}.consistency-ok{color:var(--gold)}.consistency-conflict{color:var(--red-light)}
+    .meta-cards{display:flex;gap:10px;margin-bottom:24px}
+    .meta-card{flex:1;background:var(--bg-card);border:1px solid var(--border);padding:16px;text-align:center}
+    .meta-card-label{font-family:'Cinzel',serif;font-size:.6rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);margin-bottom:6px}
+    .meta-card-value{font-size:1.1rem;font-weight:700}
+    .meta-card-hint{font-size:.6rem;color:var(--text-muted);margin-top:4px}
+    .confidence-high{color:var(--teal-light)}.confidence-medium{color:var(--gold)}.confidence-hybrid{color:var(--red-light)}
+    .consistency-good{color:var(--teal-light)}.consistency-ok{color:var(--gold)}.consistency-conflict{color:var(--red-light)}
 
-        .conflicts-section{background:rgba(160,64,64,.05);border:1px solid rgba(160,64,64,.15);padding:16px 20px;margin-bottom:24px}
-        .conflicts-section h3{font-family:'Cinzel',serif;font-size:.7rem;text-transform:uppercase;letter-spacing:2px;color:var(--red-light);margin-bottom:10px}
-        .conflict-item{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(160,64,64,.08);font-size:.78rem}
-        .conflict-item:last-child{border-bottom:none}
-        .conflict-axis{color:var(--text);width:100px;flex-shrink:0}
-        .conflict-detail{color:var(--text-dim);flex:1}
+    .conflicts-section{background:rgba(160,64,64,.05);border:1px solid rgba(160,64,64,.15);padding:16px 20px;margin-bottom:24px}
+    .conflicts-section h3{font-family:'Cinzel',serif;font-size:.7rem;text-transform:uppercase;letter-spacing:2px;color:var(--red-light);margin-bottom:10px}
+    .conflict-item{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(160,64,64,.08);font-size:.78rem}
+    .conflict-item:last-child{border-bottom:none}
+    .conflict-axis{color:var(--text);width:100px;flex-shrink:0}
+    .conflict-detail{color:var(--text-dim);flex:1}
 
-        .section-card{background:var(--bg-card);border:1px solid var(--border);padding:24px;margin-bottom:20px}
-        .section-card h3{font-family:'Cinzel',serif;font-size:.72rem;text-transform:uppercase;letter-spacing:2px;color:var(--text-dim);margin-bottom:16px}
+    .section-card{background:var(--bg-card);border:1px solid var(--border);padding:24px;margin-bottom:20px}
+    .section-card h3{font-family:'Cinzel',serif;font-size:.72rem;text-transform:uppercase;letter-spacing:2px;color:var(--text-dim);margin-bottom:16px}
 
-        .profile-axis{display:flex;align-items:center;margin-bottom:8px;gap:10px}
-        .axis-name{width:100px;font-size:.72rem;color:var(--text-dim);text-align:right;flex-shrink:0}
-        .axis-bar-bg{flex:1;height:6px;background:rgba(200,164,78,.06);overflow:hidden}
-        .axis-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold-dark),var(--gold));transition:width .6s ease}
-        .axis-bar-fill.conflicted{background:linear-gradient(90deg,var(--red),var(--red-light));animation:pulse-bar 1.5s ease-in-out infinite}
-        @keyframes pulse-bar{0%,100%{opacity:1}50%{opacity:.5}}
-        .axis-value{width:28px;font-size:.72rem;color:var(--text-dim);flex-shrink:0}
-        .axis-weight{width:32px;font-size:.58rem;color:var(--text-muted);flex-shrink:0}
+    .profile-axis{display:flex;align-items:center;margin-bottom:8px;gap:10px}
+    .axis-name{width:100px;font-size:.72rem;color:var(--text-dim);text-align:right;flex-shrink:0}
+    .axis-bar-bg{flex:1;height:6px;background:rgba(200,164,78,.06);overflow:hidden}
+    .axis-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold-dark),var(--gold));transition:width .6s ease}
+    .axis-bar-fill.conflicted{background:linear-gradient(90deg,var(--red),var(--red-light));animation:pulse-bar 1.5s ease-in-out infinite}
+    @keyframes pulse-bar{0%,100%{opacity:1}50%{opacity:.5}}
+    .axis-value{width:28px;font-size:.72rem;color:var(--text-dim);flex-shrink:0}
+    .axis-weight{width:32px;font-size:.58rem;color:var(--text-muted);flex-shrink:0}
 
-        .hero-entry{background:var(--bg-card);border:1px solid var(--border);margin-bottom:10px;overflow:hidden}
-        .hero-entry.top-pick{border-color:rgba(200,164,78,.3);background:linear-gradient(180deg,rgba(200,164,78,.05),var(--bg-card))}
-        .hero-entry.top-pick::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
-        .hero-entry{position:relative}
-        .hero-card{display:flex;align-items:center;padding:16px 20px 8px}
-        .hero-rank{font-family:'Cinzel',serif;font-size:1.4rem;font-weight:900;color:var(--text-muted);width:40px;flex-shrink:0}
-        .top-pick .hero-rank{color:var(--gold)}
-        .hero-info{flex:1}
-        .hero-name{font-family:'Cinzel',serif;font-size:.95rem;font-weight:700;letter-spacing:1px;margin-bottom:4px}
-        .top-pick .hero-name{color:var(--gold-light)}
-        .hero-match-bar-bg{height:4px;background:rgba(200,164,78,.06);overflow:hidden}
-        .hero-match-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold-dark),var(--gold));transition:width .8s ease}
-        .hero-pct{font-family:'Cinzel',serif;font-size:1.1rem;font-weight:700;color:var(--text-dim);width:64px;text-align:right;flex-shrink:0}
-        .top-pick .hero-pct{color:var(--gold)}
+    .hero-entry{background:var(--bg-card);border:1px solid var(--border);margin-bottom:10px;overflow:hidden;position:relative}
+    .hero-entry.top-pick{border-color:rgba(200,164,78,.3);background:linear-gradient(180deg,rgba(200,164,78,.05),var(--bg-card))}
+    .hero-entry.top-pick::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+    .hero-card{display:flex;align-items:center;padding:16px 20px 8px}
+    .hero-rank{font-family:'Cinzel',serif;font-size:1.4rem;font-weight:900;color:var(--text-muted);width:40px;flex-shrink:0}
+    .top-pick .hero-rank{color:var(--gold)}
+    .hero-info{flex:1}
+    .hero-name{font-family:'Cinzel',serif;font-size:.95rem;font-weight:700;letter-spacing:1px;margin-bottom:4px}
+    .top-pick .hero-name{color:var(--gold-light)}
+    .hero-match-bar-bg{height:4px;background:rgba(200,164,78,.06);overflow:hidden}
+    .hero-match-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold-dark),var(--gold));transition:width .8s ease}
+    .hero-pct{font-family:'Cinzel',serif;font-size:1.1rem;font-weight:700;color:var(--text-dim);width:64px;text-align:right;flex-shrink:0}
+    .top-pick .hero-pct{color:var(--gold)}
 
-        .hero-explain-area{padding:0 20px 12px}
-        .hero-explain-toggle{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);cursor:pointer;background:none;border:none;padding:4px 0;transition:color .2s}
-        .hero-explain-toggle:hover{color:var(--gold)}
-        .hero-explain{margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
-        .explain-summary{font-size:.68rem;color:var(--text-dim);margin-bottom:8px}
-        .explain-row{display:flex;align-items:center;padding:2px 0;font-size:.68rem;gap:4px}
-        .explain-icon{width:18px;text-align:center;flex-shrink:0;font-size:.78rem}
-        .explain-axis-name{width:100px;color:var(--text-dim);flex-shrink:0}
-        .explain-values{color:var(--text-muted);display:flex;gap:12px}
-        .explain-player{color:var(--gold)}.explain-hero{color:var(--teal-light)}
-        .explain-diff{color:var(--text-muted);font-size:.58rem;width:44px;text-align:right;flex-shrink:0}
+    .hero-explain-area{padding:0 20px 12px}
+    .hero-explain-toggle{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);cursor:pointer;background:none;border:none;padding:4px 0;transition:color .2s}
+    .hero-explain-toggle:hover{color:var(--gold)}
+    .hero-explain{margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+    .explain-summary{font-size:.68rem;color:var(--text-dim);margin-bottom:8px}
+    .explain-row{display:flex;align-items:center;padding:2px 0;font-size:.68rem;gap:4px}
+    .explain-icon{width:18px;text-align:center;flex-shrink:0;font-size:.78rem}
+    .explain-axis-name{width:100px;color:var(--text-dim);flex-shrink:0}
+    .explain-values{color:var(--text-muted);display:flex;gap:12px}
+    .explain-player{color:var(--gold)}.explain-hero{color:var(--teal-light)}
+    .explain-diff{color:var(--text-muted);font-size:.58rem;width:44px;text-align:right;flex-shrink:0}
 
-        .worst-section{margin-top:24px}
-        .worst-section h3{font-family:'Cinzel',serif;font-size:.7rem;text-transform:uppercase;letter-spacing:2px;color:var(--text-muted);margin-bottom:12px}
-        .worst-hero{display:flex;justify-content:space-between;padding:6px 0;font-size:.78rem;color:var(--text-muted);border-bottom:1px solid rgba(200,164,78,.04)}
+    .worst-section{margin-top:24px}
+    .worst-section h3{font-family:'Cinzel',serif;font-size:.7rem;text-transform:uppercase;letter-spacing:2px;color:var(--text-muted);margin-bottom:12px}
+    .worst-hero{display:flex;justify-content:space-between;padding:6px 0;font-size:.78rem;color:var(--text-muted);border-bottom:1px solid rgba(200,164,78,.04)}
 
-        .feedback-section{background:var(--bg-card);border:1px solid var(--border);padding:24px;margin-top:28px;text-align:center}
-        .feedback-section h3{font-family:'Cinzel',serif;font-size:.85rem;letter-spacing:1px;margin-bottom:14px}
-        .feedback-buttons{display:flex;gap:10px;justify-content:center;margin-bottom:16px}
-        .fb-btn{padding:8px 24px;border:1px solid var(--border);background:transparent;color:var(--text-dim);font-family:'Inter',sans-serif;font-size:.82rem;cursor:pointer;transition:all .2s}
-        .fb-btn:hover{border-color:var(--gold-dark);background:var(--gold-glow);color:var(--gold)}
-        .fb-btn.active{border-color:var(--gold);background:rgba(200,164,78,.1);color:var(--gold)}
-        .real-main-select{margin-top:12px}
-        .real-main-select label{display:block;font-size:.78rem;color:var(--text-dim);margin-bottom:6px}
-        .real-main-select select{padding:8px 14px;border:1px solid var(--border);background:var(--bg-deep);color:var(--text);font-family:'Inter',sans-serif;font-size:.82rem;width:200px;cursor:pointer;border-radius:0}
+    .feedback-section{background:var(--bg-card);border:1px solid var(--border);padding:24px;margin-top:28px;text-align:center}
+    .feedback-section h3{font-family:'Cinzel',serif;font-size:.85rem;letter-spacing:1px;margin-bottom:14px}
+    .feedback-buttons{display:flex;gap:10px;justify-content:center;margin-bottom:16px}
+    .fb-btn{padding:8px 24px;border:1px solid var(--border);background:transparent;color:var(--text-dim);font-family:'Inter',sans-serif;font-size:.82rem;cursor:pointer;transition:all .2s}
+    .fb-btn:hover{border-color:var(--gold-dark);background:var(--gold-glow);color:var(--gold)}
+    .fb-btn.active{border-color:var(--gold);background:rgba(200,164,78,.1);color:var(--gold)}
+    .real-main-select{margin-top:12px}
+    .real-main-select label{display:block;font-size:.78rem;color:var(--text-dim);margin-bottom:6px}
+    .real-main-select select{padding:8px 14px;border:1px solid var(--border);background:var(--bg-deep);color:var(--text);font-family:'Inter',sans-serif;font-size:.82rem;width:200px;cursor:pointer;border-radius:0}
 
-        /* ═══ CALIBRATION FORM ═══ */
-        .calibration-section{background:var(--bg-card);border:1px solid var(--border);padding:24px;margin-top:28px}
-        .calibration-section h3{font-family:'Cinzel',serif;font-size:.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:6px;text-align:center}
-        .calibration-section .sub{font-size:.72rem;color:var(--text-dim);text-align:center;margin-bottom:20px}
-        .cal-hero-select{text-align:center;margin-bottom:20px}
-        .cal-hero-select select{padding:8px 14px;border:1px solid var(--border);background:var(--bg-deep);color:var(--text);font-family:'Inter',sans-serif;font-size:.82rem;width:200px;border-radius:0}
-        .cal-axis-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
-        .cal-axis-name{width:100px;font-size:.72rem;color:var(--text-dim);text-align:right;flex-shrink:0}
-        .cal-btns{display:flex;gap:4px}
-        .cal-btn{width:36px;height:36px;border:1px solid rgba(200,164,78,.1);background:rgba(200,164,78,.02);color:var(--text-dim);font-family:'Cinzel',serif;font-size:.85rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;border-radius:6px}
-        .cal-btn:hover{border-color:var(--gold-dark);background:rgba(200,164,78,.08);color:var(--gold-light)}
-        .cal-btn.selected{border-color:var(--gold);background:rgba(200,164,78,.15);color:var(--gold)}
-        .cal-labels{display:flex;justify-content:space-between;font-size:.55rem;color:var(--text-muted);width:196px}
-        .cal-submit{display:block;margin:20px auto 0;padding:10px 32px;border:1px solid var(--gold-dark);background:rgba(200,164,78,.08);color:var(--gold);font-family:'Cinzel',serif;font-size:.75rem;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s}
-        .cal-submit:hover{background:rgba(200,164,78,.15);box-shadow:0 0 15px rgba(200,164,78,.1)}
-        .cal-msg{text-align:center;font-size:.72rem;color:var(--teal-light);margin-top:10px;min-height:20px}
+    .calibration-section{background:var(--bg-card);border:1px solid var(--border);padding:24px;margin-top:28px}
+    .calibration-section h3{font-family:'Cinzel',serif;font-size:.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:6px;text-align:center}
+    .calibration-section .sub{font-size:.72rem;color:var(--text-dim);text-align:center;margin-bottom:20px}
+    .cal-hero-select{text-align:center;margin-bottom:20px}
+    .cal-hero-select select{padding:8px 14px;border:1px solid var(--border);background:var(--bg-deep);color:var(--text);font-family:'Inter',sans-serif;font-size:.82rem;width:200px;border-radius:0}
+    .cal-axis-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+    .cal-axis-name{width:100px;font-size:.72rem;color:var(--text-dim);text-align:right;flex-shrink:0}
+    .cal-btns{display:flex;gap:4px}
+    .cal-btn{width:36px;height:36px;border:1px solid rgba(200,164,78,.1);background:rgba(200,164,78,.02);color:var(--text-dim);font-family:'Cinzel',serif;font-size:.85rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;border-radius:6px}
+    .cal-btn:hover{border-color:var(--gold-dark);background:rgba(200,164,78,.08);color:var(--gold-light)}
+    .cal-btn.selected{border-color:var(--gold);background:rgba(200,164,78,.15);color:var(--gold)}
+    .cal-labels{display:flex;justify-content:space-between;font-size:.55rem;color:var(--text-muted);width:196px}
+    .cal-submit{display:block;margin:20px auto 0;padding:10px 32px;border:1px solid var(--gold-dark);background:rgba(200,164,78,.08);color:var(--gold);font-family:'Cinzel',serif;font-size:.75rem;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s}
+    .cal-submit:hover{background:rgba(200,164,78,.15);box-shadow:0 0 15px rgba(200,164,78,.1)}
+    .cal-submit:disabled{opacity:.3;cursor:not-allowed}
+    .cal-msg{text-align:center;font-size:.72rem;margin-top:10px;min-height:20px}
 
-        .bottom-btns{text-align:center;margin-top:32px}
-        .export-btn,.restart-btn{display:inline-block;padding:10px 28px;border:1px solid rgba(200,164,78,.08);background:transparent;color:var(--text-muted);font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s;margin:4px}
-        .export-btn:hover,.restart-btn:hover{border-color:var(--gold-dark);color:var(--gold)}
+    .bottom-btns{text-align:center;margin-top:32px}
+    .export-btn,.restart-btn{display:inline-block;padding:10px 28px;border:1px solid rgba(200,164,78,.08);background:transparent;color:var(--text-muted);font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s;margin:4px}
+    .export-btn:hover,.restart-btn:hover{border-color:var(--gold-dark);color:var(--gold)}
 
-        .debug-section{margin-top:28px;background:rgba(0,0,0,.3);border:1px solid rgba(200,164,78,.04);padding:16px}
-        .debug-section summary{font-size:.65rem;color:var(--text-muted);cursor:pointer;text-transform:uppercase;letter-spacing:1px}
-        .debug-section pre{margin-top:10px;font-size:.6rem;color:var(--text-muted);white-space:pre-wrap;line-height:1.5}
+    .debug-section{margin-top:28px;background:rgba(0,0,0,.3);border:1px solid rgba(200,164,78,.04);padding:16px}
+    .debug-section summary{font-size:.65rem;color:var(--text-muted);cursor:pointer;text-transform:uppercase;letter-spacing:1px}
+    .debug-section pre{margin-top:10px;font-size:.6rem;color:var(--text-muted);white-space:pre-wrap;line-height:1.5}
 
-        /* ═══ SEND STATUS ═══ */
-        .send-status{position:fixed;bottom:20px;right:20px;padding:10px 18px;border-radius:8px;font-size:.75rem;font-family:'Inter',sans-serif;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
-        .send-status.show{opacity:1}
-        .send-status.success{background:rgba(58,138,122,.9);color:#fff}
-        .send-status.error{background:rgba(160,64,64,.9);color:#fff}
-
-        @media(max-width:580px){
-            .header h1{font-size:1.5rem;letter-spacing:3px}
-            .question-card{padding:24px 16px}
-            .scale-option-btn{width:46px;height:46px;font-size:.95rem}
-            .scale-option-label{font-size:.55rem}
-            .scale-container{gap:4px}
-            .meta-cards{flex-direction:column}
-            .axis-name,.explain-axis-name,.cal-axis-name{width:80px;font-size:.65rem}
-            .cal-btn{width:32px;height:32px;font-size:.75rem}
-        }
-    </style>
+    @media(max-width:580px){
+      .header h1{font-size:1.5rem;letter-spacing:3px}
+      .question-card{padding:24px 16px}
+      .scale-option-btn{width:46px;height:46px;font-size:.95rem}
+      .scale-option-label{font-size:.55rem}
+      .scale-container{gap:4px}
+      .meta-cards{flex-direction:column}
+      .axis-name,.explain-axis-name,.cal-axis-name{width:80px;font-size:.65rem}
+      .cal-btn{width:32px;height:32px;font-size:.75rem}
+    }
+  </style>
 </head>
 <body>
-
-<!-- Уведомление об отправке -->
-<div class="send-status" id="sendStatus"></div>
-
 <div class="container">
-    <div class="header">
-        <div class="header-emblem"></div>
-        <h1>Deadlock</h1>
-        <div class="header-subtitle">Найди своего мейна</div>
-        <div class="deco-line"><div class="deco-diamond"></div></div>
-        <p>20 вопросов · 4 минуты · точный результат</p>
+
+  <div class="header">
+    <div class="header-emblem"></div>
+    <h1>Deadlock</h1>
+    <div class="header-subtitle">Найди своего мейна</div>
+    <div class="deco-line"><div class="deco-diamond"></div></div>
+    <p>20 вопросов · 4 минуты · точный результат</p>
+  </div>
+
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-info">
+      <span id="progressLabel">Вопрос 1 из 20</span>
+      <span id="progressPct">0%</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  </div>
+
+  <div id="quizArea"></div>
+
+  <div class="nav-buttons" id="navButtons">
+    <button class="btn btn-back" id="btnBack" disabled onclick="goBack()">← Назад</button>
+    <button class="btn btn-next" id="btnNext" disabled onclick="goNext()">Далее →</button>
+  </div>
+
+  <div id="results">
+    <div class="results-title">Результат</div>
+    <div class="results-subtitle" id="resultsSubtitle"></div>
+    <div class="deco-line"><div class="deco-diamond"></div></div>
+    <div class="meta-cards" id="metaCards"></div>
+    <div class="conflicts-section" id="conflictsSection" style="display:none">
+      <h3>⚠ Противоречия в ответах</h3>
+      <div id="conflictsList"></div>
+    </div>
+    <div class="section-card"><h3>Твой профиль</h3><div id="profileBars"></div></div>
+    <div id="heroCards"></div>
+    <div class="worst-section"><h3>Наименее подходящие</h3><div id="worstHeroes"></div></div>
+
+    <div class="feedback-section">
+      <h3>Согласен с результатом?</h3>
+      <div class="feedback-buttons">
+        <button class="fb-btn" onclick="setFeedback(this,true)">👍 Да</button>
+        <button class="fb-btn" onclick="setFeedback(this,false)">👎 Нет</button>
+      </div>
+      <div class="real-main-select">
+        <label>Кто на самом деле твой мейн?</label>
+        <select id="realMainSelect"><option value="">— выбери —</option></select>
+      </div>
     </div>
 
-    <div class="progress-wrap" id="progressWrap">
-        <div class="progress-info">
-            <span id="progressLabel">Вопрос 1 из 20</span>
-            <span id="progressPct">0%</span>
-        </div>
-        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="calibration-section">
+      <h3>Помоги откалибровать тест</h3>
+      <p class="sub">Если ты мейнишь героя — оцени его по каждой шкале</p>
+      <div class="cal-hero-select">
+        <select id="calHeroSelect"><option value="">— выбери своего мейна —</option></select>
+      </div>
+      <div id="calAxes"></div>
+      <button class="cal-submit" id="calSubmitBtn" onclick="submitCalibration()">Отправить</button>
+      <div class="cal-msg" id="calMsg"></div>
     </div>
 
-    <div id="quizArea"></div>
-
-    <div class="nav-buttons" id="navButtons">
-        <button class="btn btn-back" id="btnBack" disabled onclick="goBack()">← Назад</button>
-        <button class="btn btn-next" id="btnNext" disabled onclick="goNext()">Далее →</button>
+    <div class="bottom-btns">
+      <button class="export-btn" onclick="exportProfile()">📋 Скопировать</button>
+      <button class="restart-btn" onclick="restart()">Пройти заново</button>
     </div>
 
-    <div id="results">
-        <div class="results-title">Результат</div>
-        <div class="results-subtitle" id="resultsSubtitle"></div>
-        <div class="deco-line"><div class="deco-diamond"></div></div>
-        <div class="meta-cards" id="metaCards"></div>
-
-        <div class="conflicts-section" id="conflictsSection" style="display:none">
-            <h3>⚠ Противоречия в ответах</h3>
-            <div id="conflictsList"></div>
-        </div>
-
-        <div class="section-card"><h3>Твой профиль</h3><div id="profileBars"></div></div>
-        <div id="heroCards"></div>
-        <div class="worst-section"><h3>Наименее подходящие</h3><div id="worstHeroes"></div></div>
-
-        <div class="feedback-section">
-            <h3>Согласен с результатом?</h3>
-            <div class="feedback-buttons">
-                <button class="fb-btn" onclick="setFeedback(this,true)">👍 Да</button>
-                <button class="fb-btn" onclick="setFeedback(this,false)">👎 Нет</button>
-            </div>
-            <div class="real-main-select">
-                <label>Кто на самом деле твой мейн?</label>
-                <select id="realMainSelect"><option value="">— выбери —</option></select>
-            </div>
-        </div>
-
-        <!-- ═══ CALIBRATION FORM ═══ -->
-        <div class="calibration-section">
-            <h3>Помоги откалибровать тест</h3>
-            <p class="sub">Если ты мейнишь героя — оцени его по каждой шкале. Это сделает тест точнее для всех.</p>
-            <div class="cal-hero-select">
-                <select id="calHeroSelect"><option value="">— выбери своего мейна —</option></select>
-            </div>
-            <div id="calAxes"></div>
-            <button class="cal-submit" onclick="submitCalibration()">Отправить</button>
-            <div class="cal-msg" id="calMsg"></div>
-        </div>
-
-        <div class="bottom-btns">
-            <button class="export-btn" onclick="exportProfile()">📋 Скопировать</button>
-            <button class="restart-btn" onclick="restart()">Пройти заново</button>
-        </div>
-
-        <details class="debug-section">
-            <summary>Debug: лог алгоритма</summary>
-            <pre id="debugLog"></pre>
-        </details>
-    </div>
+    <details class="debug-section">
+      <summary>Debug: лог алгоритма</summary>
+      <pre id="debugLog"></pre>
+    </details>
+  </div>
 </div>
 
 <script>
 // ═══════════════════════════════════════════════════════════════
-//  GOOGLE SHEETS INTEGRATION
-// ═══════════════════════════════════════════════════════════════
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbylq4kgeYoqZW9uDAKC2u6QJed595A9Bh6Ng4yKdDQR7tgU2htfyGOzkeP72dOgJkzn/exec';
-
-// Генерация уникального ID сессии
-const SESSION_ID = crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).substr(2);
-
-async function sendData(payload) {
-    // Добавляем метаданные
-    payload.sessionId = SESSION_ID;
-    payload.timestamp = new Date().toISOString();
-    payload.url = window.location.href;
-    payload.screenRes = `${screen.width}x${screen.height}`;
-
-    try {
-        const response = await fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        console.log('✅ Data sent:', payload.type);
-        showSendStatus('✅ Данные отправлены', 'success');
-
-        // Убираем из очереди если были сохранены локально
-        clearPendingData(payload.type);
-
-    } catch (err) {
-        console.warn('⚠️ Send failed, saving locally:', err);
-        showSendStatus('⚠️ Сохранено локально', 'error');
-
-        // Фолбэк — сохраняем в localStorage
-        const queue = JSON.parse(localStorage.getItem('deadlock_pending') || '[]');
-        queue.push(payload);
-        localStorage.setItem('deadlock_pending', JSON.stringify(queue));
-    }
-}
-
-// Показываем статус отправки
-function showSendStatus(msg, type) {
-    const el = document.getElementById('sendStatus');
-    el.textContent = msg;
-    el.className = 'send-status show ' + type;
-    setTimeout(() => el.classList.remove('show'), 2500);
-}
-
-// Очистка локальной очереди
-function clearPendingData(type) {
-    const queue = JSON.parse(localStorage.getItem('deadlock_pending') || '[]');
-    const filtered = queue.filter(item => item.type !== type);
-    localStorage.setItem('deadlock_pending', JSON.stringify(filtered));
-}
-
-// Попытка отправить накопленные данные при загрузке
-function retrySendPending() {
-    const queue = JSON.parse(localStorage.getItem('deadlock_pending') || '[]');
-    if (queue.length > 0) {
-        console.log(`📤 Retrying ${queue.length} pending items...`);
-        queue.forEach(item => {
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(item)
-            }).then(() => {
-                console.log('✅ Retry sent:', item.type);
-            }).catch(() => {});
-        });
-        // Очищаем после попытки
-        localStorage.removeItem('deadlock_pending');
-    }
-}
-
-// Пытаемся отправить накопленное при загрузке страницы
-window.addEventListener('load', () => setTimeout(retrySendPending, 3000));
-
-
-// ═══════════════════════════════════════════════════════════════
 //  CONFIG
 // ═══════════════════════════════════════════════════════════════
-const NUM_AXES = 11;
-const TOTAL_Q = 20;
-
-const CONFIG = {
-    weights: [
-        1.0,  // 0  Range
-        1.5,  // 1  Aggression
-        1.0,  // 2  Complexity
-        1.0,  // 3  Team
-        1.0,  // 4  Tankiness
-        1.5,  // 5  Mobility
-        1.0,  // 6  Burst
-        1.2,  // 7  Scaling
-        1.3,  // 8  Aim
-        1.0,  // 9  Zoning
-        1.0,  // 10 Catch
-    ],
-    transform:{1:1.0,2:2.2,3:3.0,4:3.8,5:5.0},
-    primaryWeight:0.65, crossWeight:0.35,
-    conflictThreshold:2,
-    confidence:{highThreshold:0.8,mediumThreshold:0.4},
-    explain:{matchThreshold:0.5,closeThreshold:1.2},
+const NUM_AXES=11,TOTAL_Q=20;
+const CONFIG={
+  weights:[1.0,1.5,1.0,1.0,1.0,1.5,1.0,1.2,1.3,1.0,1.0],
+  transform:{1:1.0,2:2.2,3:3.0,4:3.8,5:5.0},
+  primaryWeight:.65,crossWeight:.35,
+  conflictThreshold:2,
+  confidence:{highThreshold:.8,mediumThreshold:.4},
+  explain:{matchThreshold:.5,closeThreshold:1.2},
 };
 
 // ═══════════════════════════════════════════════════════════════
-//  HEROES — 38 heroes, 11 axes
+//  HEROES
 // ═══════════════════════════════════════════════════════════════
-const HERO_DATA = [
-    {name:"Abrams",range:1,aggr:5,compl:1,team:2,tank:5,mobil:3,burst:3,scaling:3,aim:2,zoning:1,catch:3},
-    {name:"Apollo",range:2,aggr:4,compl:4,team:2,tank:2,mobil:4,burst:4,scaling:2,aim:2,zoning:1,catch:1},
-    {name:"Bebop",range:3,aggr:3,compl:3,team:4,tank:3,mobil:2,burst:4,scaling:4,aim:2,zoning:4,catch:5},
-    {name:"Billy",range:2,aggr:4,compl:3,team:3,tank:3,mobil:2,burst:2,scaling:2,aim:2,zoning:3,catch:3},
-    {name:"Calico",range:2,aggr:3,compl:4,team:1,tank:1,mobil:5,burst:5,scaling:3,aim:2,zoning:1,catch:1},
-    {name:"Celeste",range:2,aggr:4,compl:2,team:3,tank:2,mobil:5,burst:4,scaling:4,aim:2,zoning:4,catch:1},
-    {name:"Drifter",range:3,aggr:3,compl:3,team:2,tank:3,mobil:4,burst:3,scaling:3,aim:3,zoning:2,catch:1},
-    {name:"Dynamo",range:2,aggr:2,compl:3,team:5,tank:4,mobil:2,burst:3,scaling:5,aim:1,zoning:4,catch:4},
-    {name:"Graves",range:2,aggr:2,compl:1,team:4,tank:1,mobil:2,burst:2,scaling:4,aim:1,zoning:4,catch:2},
-    {name:"Grey Talon",range:5,aggr:2,compl:2,team:2,tank:1,mobil:2,burst:3,scaling:3,aim:5,zoning:3,catch:2},
-    {name:"Haze",range:3,aggr:4,compl:3,team:1,tank:1,mobil:3,burst:4,scaling:4,aim:5,zoning:1,catch:2},
-    {name:"Holliday",range:2,aggr:4,compl:5,team:4,tank:1,mobil:5,burst:3,scaling:3,aim:3,zoning:4,catch:5},
-    {name:"Infernus",range:2,aggr:4,compl:2,team:2,tank:3,mobil:3,burst:1,scaling:2,aim:2,zoning:3,catch:1},
-    {name:"Ivy",range:4,aggr:2,compl:3,team:5,tank:2,mobil:4,burst:2,scaling:3,aim:2,zoning:4,catch:3},
-    {name:"Kelvin",range:2,aggr:3,compl:3,team:4,tank:5,mobil:3,burst:2,scaling:2,aim:1,zoning:4,catch:4},
-    {name:"Lady Geist",range:3,aggr:3,compl:2,team:2,tank:3,mobil:2,burst:3,scaling:4,aim:3,zoning:3,catch:1},
-    {name:"Lash",range:2,aggr:5,compl:4,team:3,tank:2,mobil:5,burst:5,scaling:2,aim:3,zoning:1,catch:4},
-    {name:"McGinnis",range:4,aggr:1,compl:2,team:4,tank:3,mobil:1,burst:1,scaling:5,aim:2,zoning:5,catch:3},
-    {name:"Mina",range:2,aggr:5,compl:4,team:2,tank:1,mobil:3,burst:4,scaling:3,aim:3,zoning:1,catch:1},
-    {name:"Mirage",range:3,aggr:2,compl:3,team:2,tank:2,mobil:3,burst:3,scaling:4,aim:3,zoning:2,catch:2},
-    {name:"Mo & Krill",range:1,aggr:5,compl:2,team:2,tank:5,mobil:3,burst:2,scaling:2,aim:1,zoning:2,catch:4},
-    {name:"Paige",range:5,aggr:1,compl:2,team:5,tank:2,mobil:1,burst:1,scaling:4,aim:1,zoning:5,catch:4},
-    {name:"Paradox",range:3,aggr:3,compl:5,team:4,tank:2,mobil:3,burst:3,scaling:3,aim:3,zoning:3,catch:5},
-    {name:"Pocket",range:2,aggr:4,compl:3,team:2,tank:2,mobil:4,burst:5,scaling:3,aim:2,zoning:2,catch:1},
-    {name:"Rem",range:3,aggr:2,compl:4,team:5,tank:1,mobil:4,burst:2,scaling:3,aim:2,zoning:4,catch:3},
-    {name:"Seven",range:3,aggr:3,compl:3,team:4,tank:2,mobil:2,burst:2,scaling:5,aim:4,zoning:5,catch:1},
-    {name:"Shiv",range:1,aggr:5,compl:4,team:2,tank:4,mobil:3,burst:4,scaling:2,aim:2,zoning:1,catch:3},
-    {name:"Silver",range:4,aggr:2,compl:3,team:4,tank:2,mobil:3,burst:3,scaling:4,aim:3,zoning:3,catch:2},
-    {name:"Sinclair",range:3,aggr:3,compl:5,team:3,tank:1,mobil:3,burst:5,scaling:4,aim:2,zoning:4,catch:3},
-    {name:"The Doorman",range:3,aggr:1,compl:4,team:4,tank:1,mobil:4,burst:2,scaling:3,aim:2,zoning:4,catch:4},
-    {name:"Venator",range:3,aggr:2,compl:1,team:3,tank:2,mobil:2,burst:4,scaling:4,aim:5,zoning:3,catch:2},
-    {name:"Victor",range:1,aggr:4,compl:2,team:4,tank:4,mobil:2,burst:2,scaling:5,aim:2,zoning:4,catch:1},
-    {name:"Vindicta",range:5,aggr:2,compl:2,team:1,tank:1,mobil:4,burst:4,scaling:3,aim:5,zoning:3,catch:2},
-    {name:"Viscous",range:2,aggr:3,compl:3,team:5,tank:4,mobil:4,burst:2,scaling:3,aim:2,zoning:4,catch:4},
-    {name:"Vyper",range:3,aggr:5,compl:2,team:2,tank:1,mobil:4,burst:3,scaling:4,aim:4,zoning:2,catch:2},
-    {name:"Warden",range:3,aggr:3,compl:2,team:4,tank:3,mobil:1,burst:2,scaling:4,aim:4,zoning:3,catch:3},
-    {name:"Wraith",range:4,aggr:3,compl:3,team:1,tank:1,mobil:4,burst:4,scaling:5,aim:5,zoning:1,catch:3},
-    {name:"Yamato",range:1,aggr:4,compl:5,team:1,tank:3,mobil:4,burst:4,scaling:3,aim:3,zoning:2,catch:1},
+const HERO_DATA=[
+  {name:"Abrams",range:1,aggr:5,compl:1,team:2,tank:5,mobil:3,burst:3,scaling:3,aim:2,zoning:1,catch:3},
+  {name:"Apollo",range:2,aggr:4,compl:4,team:2,tank:2,mobil:4,burst:4,scaling:2,aim:2,zoning:1,catch:1},
+  {name:"Bebop",range:3,aggr:3,compl:3,team:4,tank:3,mobil:2,burst:4,scaling:4,aim:2,zoning:4,catch:5},
+  {name:"Billy",range:2,aggr:4,compl:3,team:3,tank:3,mobil:2,burst:2,scaling:2,aim:2,zoning:3,catch:3},
+  {name:"Calico",range:2,aggr:3,compl:4,team:1,tank:1,mobil:5,burst:5,scaling:3,aim:2,zoning:1,catch:1},
+  {name:"Celeste",range:2,aggr:4,compl:2,team:3,tank:2,mobil:5,burst:4,scaling:4,aim:2,zoning:4,catch:1},
+  {name:"Drifter",range:3,aggr:3,compl:3,team:2,tank:3,mobil:4,burst:3,scaling:3,aim:3,zoning:2,catch:1},
+  {name:"Dynamo",range:2,aggr:2,compl:3,team:5,tank:4,mobil:2,burst:3,scaling:5,aim:1,zoning:4,catch:4},
+  {name:"Graves",range:2,aggr:2,compl:1,team:4,tank:1,mobil:2,burst:2,scaling:4,aim:1,zoning:4,catch:2},
+  {name:"Grey Talon",range:5,aggr:2,compl:2,team:2,tank:1,mobil:2,burst:3,scaling:3,aim:5,zoning:3,catch:2},
+  {name:"Haze",range:3,aggr:4,compl:3,team:1,tank:1,mobil:3,burst:4,scaling:4,aim:5,zoning:1,catch:2},
+  {name:"Holliday",range:2,aggr:4,compl:5,team:4,tank:1,mobil:5,burst:3,scaling:3,aim:3,zoning:4,catch:5},
+  {name:"Infernus",range:2,aggr:4,compl:2,team:2,tank:3,mobil:3,burst:1,scaling:2,aim:2,zoning:3,catch:1},
+  {name:"Ivy",range:4,aggr:2,compl:3,team:5,tank:2,mobil:4,burst:2,scaling:3,aim:2,zoning:4,catch:3},
+  {name:"Kelvin",range:2,aggr:3,compl:3,team:4,tank:5,mobil:3,burst:2,scaling:2,aim:1,zoning:4,catch:4},
+  {name:"Lady Geist",range:3,aggr:3,compl:2,team:2,tank:3,mobil:2,burst:3,scaling:4,aim:3,zoning:3,catch:1},
+  {name:"Lash",range:2,aggr:5,compl:4,team:3,tank:2,mobil:5,burst:5,scaling:2,aim:3,zoning:1,catch:4},
+  {name:"McGinnis",range:4,aggr:1,compl:2,team:4,tank:3,mobil:1,burst:1,scaling:5,aim:2,zoning:5,catch:3},
+  {name:"Mina",range:2,aggr:5,compl:4,team:2,tank:1,mobil:3,burst:4,scaling:3,aim:3,zoning:1,catch:1},
+  {name:"Mirage",range:3,aggr:2,compl:3,team:2,tank:2,mobil:3,burst:3,scaling:4,aim:3,zoning:2,catch:2},
+  {name:"Mo & Krill",range:1,aggr:5,compl:2,team:2,tank:5,mobil:3,burst:2,scaling:2,aim:1,zoning:2,catch:4},
+  {name:"Paige",range:5,aggr:1,compl:2,team:5,tank:2,mobil:1,burst:1,scaling:4,aim:1,zoning:5,catch:4},
+  {name:"Paradox",range:3,aggr:3,compl:5,team:4,tank:2,mobil:3,burst:3,scaling:3,aim:3,zoning:3,catch:5},
+  {name:"Pocket",range:2,aggr:4,compl:3,team:2,tank:2,mobil:4,burst:5,scaling:3,aim:2,zoning:2,catch:1},
+  {name:"Rem",range:3,aggr:2,compl:4,team:5,tank:1,mobil:4,burst:2,scaling:3,aim:2,zoning:4,catch:3},
+  {name:"Seven",range:3,aggr:3,compl:3,team:4,tank:2,mobil:2,burst:2,scaling:5,aim:4,zoning:5,catch:1},
+  {name:"Shiv",range:1,aggr:5,compl:4,team:2,tank:4,mobil:3,burst:4,scaling:2,aim:2,zoning:1,catch:3},
+  {name:"Silver",range:4,aggr:2,compl:3,team:4,tank:2,mobil:3,burst:3,scaling:4,aim:3,zoning:3,catch:2},
+  {name:"Sinclair",range:3,aggr:3,compl:5,team:3,tank:1,mobil:3,burst:5,scaling:4,aim:2,zoning:4,catch:3},
+  {name:"The Doorman",range:3,aggr:1,compl:4,team:4,tank:1,mobil:4,burst:2,scaling:3,aim:2,zoning:4,catch:4},
+  {name:"Venator",range:3,aggr:2,compl:1,team:3,tank:2,mobil:2,burst:4,scaling:4,aim:5,zoning:3,catch:2},
+  {name:"Victor",range:1,aggr:4,compl:2,team:4,tank:4,mobil:2,burst:2,scaling:5,aim:2,zoning:4,catch:1},
+  {name:"Vindicta",range:5,aggr:2,compl:2,team:1,tank:1,mobil:4,burst:4,scaling:3,aim:5,zoning:3,catch:2},
+  {name:"Viscous",range:2,aggr:3,compl:3,team:5,tank:4,mobil:4,burst:2,scaling:3,aim:2,zoning:4,catch:4},
+  {name:"Vyper",range:3,aggr:5,compl:2,team:2,tank:1,mobil:4,burst:3,scaling:4,aim:4,zoning:2,catch:2},
+  {name:"Warden",range:3,aggr:3,compl:2,team:4,tank:3,mobil:1,burst:2,scaling:4,aim:4,zoning:3,catch:3},
+  {name:"Wraith",range:4,aggr:3,compl:3,team:1,tank:1,mobil:4,burst:4,scaling:5,aim:5,zoning:1,catch:3},
+  {name:"Yamato",range:1,aggr:4,compl:5,team:1,tank:3,mobil:4,burst:4,scaling:3,aim:3,zoning:2,catch:1},
 ];
 
 const AXES_KEYS=['range','aggr','compl','team','tank','mobil','burst','scaling','aim','zoning','catch'];
@@ -423,298 +303,227 @@ const AXES_LOW=['Вплотную','Пассивный','Простой','Сол
 const AXES_HIGH=['Снайпер','Агрессор','Хардкор','Командный','Танк','Мобильный','Ваншот','Лейт-керри','Чистый аим','Контроль зоны','Сетапер'];
 
 // ═══════════════════════════════════════════════════════════════
-//  QUESTIONS — 20
+//  QUESTIONS
 // ═══════════════════════════════════════════════════════════════
 const QUESTIONS=[
-    {id:1,axis:0,type:"primary",text:"На какой дистанции тебе комфортнее сражаться?",
-        labels:["Вплотную","Ближняя","Средняя","Дальняя","Снайпер"]},
-    {id:2,axis:1,type:"primary",text:"Как рано ты хочешь начинать драки и играть первым номером?",
-        labels:["Играю сзади","Вторая волна","По ситуации","Ищу драки","Влетаю первым"]},
-    {id:3,axis:2,type:"primary",text:"Какой уровень сложности персонажа тебе подходит?",
-        labels:["Простейший","Простой","Средний","Сложный","Чем сложнее тем лучше"]},
-    {id:4,axis:3,type:"primary",text:"Насколько тебе важно помогать тиммейтам?",
-        labels:["Играю на себя","В основном соло","Баланс","Люблю помогать","Команда = главное"]},
-    {id:5,axis:4,type:"primary",text:"Как ты относишься к получению урона в бою?",
-        labels:["Не хочу получать","Стараюсь избегать","Принимаю если надо","Нормально под огнём","Я танк"]},
-    {id:6,axis:5,type:"primary",text:"Как ты перемещаешься в бою?",
-        labels:["Стою на позиции","Двигаюсь мало","По необходимости","Активно двигаюсь","Постоянно летаю"]},
-    {id:7,axis:6,type:"primary",text:"Как тебе нравится наносить урон?",
-        labels:["DoT / изматывать","Стабильный урон","По ситуации","Быстрые комбо","Мгновенный burst"]},
-    {id:8,axis:7,type:"primary",text:"В какой стадии игры ты чувствуешь себя сильнее всего?",
-        labels:["Ранняя","Ранне-средняя","Середина","Поздне-средняя","Лейт, я монстр"]},
-    {id:9,axis:8,type:"primary",text:"Что для тебя важнее — точная стрельба или способности?",
-        labels:["Способности","Больше абилки","Баланс","Больше стрельба","Аим = оружие"]},
-    {id:10,axis:9,type:"primary",text:"Как ты контролируешь пространство в бою?",
-        labels:["Фланги, обходы","Свободное движение","По ситуации","Давлю на зону","Контроль территории"]},
-    {id:11,axis:10,type:"primary",text:"Насколько тебе нравится сетапить врагов — ловить, контролировать, создавать возможности?",
-        labels:["Не моё","Иногда если есть CC","Баланс урона и CC","Люблю ловить","Сетап = главное"]},
-    // CROSS-CHECKS (9)
-    {id:12,axis:0,type:"cross",text:"В какой момент боя ты чувствуешь себя увереннее всего?",
-        labels:["Враг передо мной","На пару дэшей","Средняя дистанция","Вижу издалека","Враг не знает где я"]},
-    {id:13,axis:1,type:"cross",text:"Враг с низким HP убегает за вышку. Действия?",
-        labels:["Отпускаю","Скорее отпущу","По ситуации","Скорее дайвну","Дайвлю 100%"]},
-    {id:14,axis:4,type:"cross",text:"Ты умер первым, но команда выиграла бой. Реакция?",
-        labels:["Раздражает","Немного неприятно","Нейтрально","Норм, был полезен","Отлично, помог"]},
-    {id:15,axis:3,type:"cross",text:"Что приносит больше удовольствия?",
-        labels:["4 фрага самому","Скорее личные фраги","Оба одинаково","Скорее setup","Идеальный ассист"]},
-    {id:16,axis:2,type:"cross",text:"Нравится изучать неочевидные механики и комбо?",
-        labels:["Нет, интуитивно","Базовое изучу","Иногда","Люблю фишки","Самое интересное!"]},
-    {id:17,axis:9,type:"cross",text:"Что тебе ближе по духу?",
-        labels:["Искать углы","Скорее атаковать","По ситуации","Держать зону","Моя территория"]},
-    {id:18,axis:5,type:"cross",text:"Между боями, когда нет цели, ты обычно:",
-        labels:["Стою на позиции","Держу зону","И то и другое","Перемещаюсь","Бегу, не стою"]},
-    {id:19,axis:6,type:"cross",text:"Какой бой тебе нравится больше?",
-        labels:["Длинный","Скорее длинный","Без разницы","Скорее быстрый","Мгновенный"]},
-    {id:20,axis:10,type:"cross",text:"Ты видишь одинокого врага. Что делаешь?",
-        labels:["Стреляю сразу","Атакую с позиции","По ситуации","Станю перед атакой","Ловлю, зову тиму"]},
+  {id:1,axis:0,type:"primary",text:"На какой дистанции тебе комфортнее сражаться?",labels:["Вплотную","Ближняя","Средняя","Дальняя","Снайпер"]},
+  {id:2,axis:1,type:"primary",text:"Как рано ты хочешь начинать драки и играть первым номером?",labels:["Играю сзади","Вторая волна","По ситуации","Ищу драки","Влетаю первым"]},
+  {id:3,axis:2,type:"primary",text:"Какой уровень сложности персонажа тебе подходит?",labels:["Простейший","Простой","Средний","Сложный","Чем сложнее тем лучше"]},
+  {id:4,axis:3,type:"primary",text:"Насколько тебе важно помогать тиммейтам?",labels:["Играю на себя","В основном соло","Баланс","Люблю помогать","Команда = главное"]},
+  {id:5,axis:4,type:"primary",text:"Как ты относишься к получению урона в бою?",labels:["Не хочу получать","Стараюсь избегать","Принимаю если надо","Нормально под огнём","Я танк"]},
+  {id:6,axis:5,type:"primary",text:"Как ты перемещаешься в бою?",labels:["Стою на позиции","Двигаюсь мало","По необходимости","Активно двигаюсь","Постоянно летаю"]},
+  {id:7,axis:6,type:"primary",text:"Как тебе нравится наносить урон?",labels:["DoT / изматывать","Стабильный урон","По ситуации","Быстрые комбо","Мгновенный burst"]},
+  {id:8,axis:7,type:"primary",text:"В какой стадии игры ты чувствуешь себя сильнее всего?",labels:["Ранняя","Ранне-средняя","Середина","Поздне-средняя","Лейт, я монстр"]},
+  {id:9,axis:8,type:"primary",text:"Что для тебя важнее — точная стрельба или способности?",labels:["Способности","Больше абилки","Баланс","Больше стрельба","Аим = оружие"]},
+  {id:10,axis:9,type:"primary",text:"Как ты контролируешь пространство в бою?",labels:["Фланги, обходы","Свободное движение","По ситуации","Давлю на зону","Контроль территории"]},
+  {id:11,axis:10,type:"primary",text:"Насколько тебе нравится сетапить врагов — ловить, контролировать, создавать возможности?",labels:["Не моё","Иногда если есть CC","Баланс урона и CC","Люблю ловить","Сетап = главное"]},
+  {id:12,axis:0,type:"cross",text:"В какой момент боя ты чувствуешь себя увереннее всего?",labels:["Враг передо мной","На пару дэшей","Средняя дистанция","Вижу издалека","Враг не знает где я"]},
+  {id:13,axis:1,type:"cross",text:"Враг с низким HP убегает за вышку. Действия?",labels:["Отпускаю","Скорее отпущу","По ситуации","Скорее дайвну","Дайвлю 100%"]},
+  {id:14,axis:4,type:"cross",text:"Ты умер первым, но команда выиграла бой. Реакция?",labels:["Раздражает","Немного неприятно","Нейтрально","Норм, был полезен","Отлично, помог"]},
+  {id:15,axis:3,type:"cross",text:"Что приносит больше удовольствия?",labels:["4 фрага самому","Скорее личные фраги","Оба одинаково","Скорее setup","Идеальный ассист"]},
+  {id:16,axis:2,type:"cross",text:"Нравится изучать неочевидные механики и комбо?",labels:["Нет, интуитивно","Базовое изучу","Иногда","Люблю фишки","Самое интересное!"]},
+  {id:17,axis:9,type:"cross",text:"Что тебе ближе по духу?",labels:["Искать углы","Скорее атаковать","По ситуации","Держать зону","Моя территория"]},
+  {id:18,axis:5,type:"cross",text:"Между боями, когда нет цели, ты обычно:",labels:["Стою на позиции","Держу зону","И то и другое","Перемещаюсь","Бегу, не стою"]},
+  {id:19,axis:6,type:"cross",text:"Какой бой тебе нравится больше?",labels:["Длинный","Скорее длинный","Без разницы","Скорее быстрый","Мгновенный"]},
+  {id:20,axis:10,type:"cross",text:"Ты видишь одинокого врага. Что делаешь?",labels:["Стреляю сразу","Атакую с позиции","По ситуации","Станю перед атакой","Ловлю, зову тиму"]},
 ];
 
 // ═══════════════════════════════════════════════════════════════
 //  ENGINE
 // ═══════════════════════════════════════════════════════════════
-const HEROES={};
-HERO_DATA.forEach(h=>{HEROES[h.name]=AXES_KEYS.map(k=>h[k])});
-
 const Engine={
-    transform(v){return CONFIG.transform[Math.round(v)]??v},
-    transformVector(v){return v.map(x=>this.transform(x))},
-    weightedDistance(a,b){let s=0;for(let i=0;i<a.length;i++)s+=CONFIG.weights[i]*(a[i]-b[i])**2;return Math.sqrt(s)},
-    maxDistance(){const d=this.transform(5)-this.transform(1);return Math.sqrt(CONFIG.weights.reduce((s,w)=>s+w*d*d,0))},
-
-    buildRawProfile(ans){
-        const p=new Array(NUM_AXES).fill(null),c=new Array(NUM_AXES).fill(null);
-        QUESTIONS.forEach(q=>{const v=ans[q.id];if(v==null)return;if(q.type==='primary')p[q.axis]=v;else c[q.axis]=v});
-        const prof=[];
-        for(let i=0;i<NUM_AXES;i++){
-            if(p[i]!=null&&c[i]!=null)prof.push(p[i]*CONFIG.primaryWeight+c[i]*CONFIG.crossWeight);
-            else if(p[i]!=null)prof.push(p[i]);else prof.push(3.0);
-        }
-        return{profile:prof,primary:p,cross:c};
-    },
-
-    analyzeConsistency(p,c){
-        const conflicts=[];let n=0;
-        for(let i=0;i<NUM_AXES;i++){if(p[i]!=null&&c[i]!=null){n++;if(Math.abs(p[i]-c[i])>=CONFIG.conflictThreshold)conflicts.push({axis:i,axisName:AXES_RU[i],primary:p[i],cross:c[i],diff:Math.abs(p[i]-c[i])})}}
-        return{conflicts,consistencyScore:n>0?Math.round((1-conflicts.length/n)*100)/100:1,axesWithBoth:n};
-    },
-
-    heroToVector(h){return AXES_KEYS.map(k=>h[k])},
-
-    explainMatch(pv,name){
-        const h=HERO_DATA.find(x=>x.name===name),hv=this.heroToVector(h);
-        const axes=pv.map((v,i)=>{const d=Math.abs(v-hv[i]);let st,ic;if(d<=CONFIG.explain.matchThreshold){st='match';ic='✅'}else if(d<=CONFIG.explain.closeThreshold){st='close';ic='🟡'}else{st='off';ic='❌'}
-        return{name:AXES_RU[i],playerVal:v,heroVal:hv[i],diff:d,status:st,icon:ic}});
-        axes.sort((a,b)=>({match:0,close:1,off:2}[a.status]-{match:0,close:1,off:2}[b.status])||a.diff-b.diff);
-        return{axes,matchCount:axes.filter(a=>a.status==='match').length,closeCount:axes.filter(a=>a.status==='close').length,offCount:axes.filter(a=>a.status==='off').length};
-    },
-
-    calculate(ans){
-        const log=[];
-        const{profile:raw,primary:pr,cross:cr}=this.buildRawProfile(ans);
-        const pVec=this.transformVector(raw);
-        const con=this.analyzeConsistency(pr,cr);
-        const mx=this.maxDistance();
-        AXES_RU.forEach((n,i)=>log.push(`${n}: raw=${raw[i].toFixed(2)} t=${pVec[i].toFixed(2)} w=${CONFIG.weights[i]}`));
-        const hr=HERO_DATA.map(h=>{const hv=this.transformVector(this.heroToVector(h));const d=this.weightedDistance(pVec,hv);const c=Math.max(0,Math.min(100,Math.round((1-d/mx)*1000)/10));return{name:h.name,distance:d,compatibility:c}});
-        hr.sort((a,b)=>a.distance-b.distance);
-        const delta=hr[1].distance-hr[0].distance;
-        let cl,clbl;
-        if(delta>=CONFIG.confidence.highThreshold){cl='high';clbl='Высокая'}
-        else if(delta>=CONFIG.confidence.mediumThreshold){cl='medium';clbl='Смешанный стиль'}
-        else{cl='hybrid';clbl='Гибридный'}
-        if(con.consistencyScore<0.7&&cl==='high'){cl='medium';clbl='Смешанный (конфликты)'}
-        const alts=hr.slice(0,5).map(h=>({name:h.name,compatibility:h.compatibility,explain:this.explainMatch(raw,h.name)}));
-        return{bestHero:hr[0].name,compatibility:hr[0].compatibility,confidence:{level:cl,label:clbl,delta:Math.round(delta*1000)/1000},consistency:{score:con.consistencyScore,conflicts:con.conflicts},alternatives:alts,worst:hr.slice(-3).map(h=>({name:h.name,compatibility:h.compatibility})),playerVector:raw,conflictedAxes:con.conflicts.map(c=>c.axis),log:log.join('\n')};
-    },
+  transform(v){return CONFIG.transform[Math.round(v)]??v},
+  transformVector(v){return v.map(x=>this.transform(x))},
+  weightedDistance(a,b){let s=0;for(let i=0;i<a.length;i++)s+=CONFIG.weights[i]*(a[i]-b[i])**2;return Math.sqrt(s)},
+  maxDistance(){const d=this.transform(5)-this.transform(1);return Math.sqrt(CONFIG.weights.reduce((s,w)=>s+w*d*d,0))},
+  buildRawProfile(ans){
+    const p=new Array(NUM_AXES).fill(null),c=new Array(NUM_AXES).fill(null);
+    QUESTIONS.forEach(q=>{const v=ans[q.id];if(v==null)return;if(q.type==='primary')p[q.axis]=v;else c[q.axis]=v});
+    const prof=[];for(let i=0;i<NUM_AXES;i++){if(p[i]!=null&&c[i]!=null)prof.push(p[i]*CONFIG.primaryWeight+c[i]*CONFIG.crossWeight);else if(p[i]!=null)prof.push(p[i]);else prof.push(3)}
+    return{profile:prof,primary:p,cross:c};
+  },
+  analyzeConsistency(p,c){
+    const conflicts=[];let n=0;
+    for(let i=0;i<NUM_AXES;i++){if(p[i]!=null&&c[i]!=null){n++;if(Math.abs(p[i]-c[i])>=CONFIG.conflictThreshold)conflicts.push({axis:i,axisName:AXES_RU[i],primary:p[i],cross:c[i],diff:Math.abs(p[i]-c[i])})}}
+    return{conflicts,consistencyScore:n>0?Math.round((1-conflicts.length/n)*100)/100:1,axesWithBoth:n};
+  },
+  heroToVector(h){return AXES_KEYS.map(k=>h[k])},
+  explainMatch(pv,name){
+    const h=HERO_DATA.find(x=>x.name===name),hv=this.heroToVector(h);
+    const axes=pv.map((v,i)=>{const d=Math.abs(v-hv[i]);let st,ic;if(d<=CONFIG.explain.matchThreshold){st='match';ic='✅'}else if(d<=CONFIG.explain.closeThreshold){st='close';ic='🟡'}else{st='off';ic='❌'}return{name:AXES_RU[i],playerVal:v,heroVal:hv[i],diff:d,status:st,icon:ic}});
+    axes.sort((a,b)=>({match:0,close:1,off:2}[a.status]-{match:0,close:1,off:2}[b.status])||a.diff-b.diff);
+    return{axes,matchCount:axes.filter(a=>a.status==='match').length,closeCount:axes.filter(a=>a.status==='close').length,offCount:axes.filter(a=>a.status==='off').length};
+  },
+  calculate(ans){
+    const log=[];
+    const{profile:raw,primary:pr,cross:cr}=this.buildRawProfile(ans);
+    const pVec=this.transformVector(raw);
+    const con=this.analyzeConsistency(pr,cr);
+    const mx=this.maxDistance();
+    AXES_RU.forEach((n,i)=>log.push(`${n}: raw=${raw[i].toFixed(2)} t=${pVec[i].toFixed(2)} w=${CONFIG.weights[i]}`));
+    const hr=HERO_DATA.map(h=>{const hv=this.transformVector(this.heroToVector(h));const d=this.weightedDistance(pVec,hv);const c=Math.max(0,Math.min(100,Math.round((1-d/mx)*1000)/10));return{name:h.name,distance:d,compatibility:c}});
+    hr.sort((a,b)=>a.distance-b.distance);
+    const delta=hr[1].distance-hr[0].distance;
+    let cl,clbl;
+    if(delta>=CONFIG.confidence.highThreshold){cl='high';clbl='Высокая'}
+    else if(delta>=CONFIG.confidence.mediumThreshold){cl='medium';clbl='Смешанный стиль'}
+    else{cl='hybrid';clbl='Гибридный'}
+    if(con.consistencyScore<.7&&cl==='high'){cl='medium';clbl='Смешанный (конфликты)'}
+    const alts=hr.slice(0,5).map(h=>({name:h.name,compatibility:h.compatibility,explain:this.explainMatch(raw,h.name)}));
+    return{bestHero:hr[0].name,compatibility:hr[0].compatibility,confidence:{level:cl,label:clbl,delta:Math.round(delta*1000)/1000},consistency:{score:con.consistencyScore,conflicts:con.conflicts},alternatives:alts,worst:hr.slice(-3).map(h=>({name:h.name,compatibility:h.compatibility})),playerVector:raw,conflictedAxes:con.conflicts.map(c=>c.axis),log:log.join('\n')};
+  },
 };
+
+// ═══════════════════════════════════════════════════════════════
+//  DATA LAYER
+// ═══════════════════════════════════════════════════════════════
+const DataLayer={
+  
+  ENDPOINT:'https://script.google.com/macros/s/AKfycbylq4kgeYoqZW9uDAKC2u6QJed595A9Bh6Ng4yKdDQR7tgU2htfyGOzkeP72dOgJkzn/exec',
+
+  sessionId:crypto.randomUUID?crypto.randomUUID():'s_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
+
+  async send(payload){
+    try{
+      await fetch(this.ENDPOINT,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)});
+      console.log('📊 Sent:',payload.type);
+    }catch(e){
+      console.warn('📊 Fail:',e);
+      this.saveLocal(payload);
+    }
+  },
+  saveLocal(p){try{const q=JSON.parse(localStorage.getItem('dl_q')||'[]');q.push(p);localStorage.setItem('dl_q',JSON.stringify(q))}catch(e){}},
+  async flushLocal(){try{const q=JSON.parse(localStorage.getItem('dl_q')||'[]');if(!q.length)return;for(const p of q)await this.send(p);localStorage.removeItem('dl_q')}catch(e){}},
+
+  sendQuizResult(r,ans){
+    this.send({type:'quiz',timestamp:new Date().toISOString(),sessionId:this.sessionId,bestHero:r.bestHero,compatibility:r.compatibility,confidence:r.confidence.label,confidenceDelta:r.confidence.delta,consistency:Math.round(r.consistency.score*100),conflictsCount:r.consistency.conflicts.length,answers:ans,playerVector:r.playerVector,top5:r.alternatives.map(h=>({name:h.name,compatibility:h.compatibility})),worst3:r.worst,screenRes:`${screen.width}x${screen.height}`,url:location.href});
+  },
+  sendFeedback(agreed,realMain,r){
+    this.send({type:'feedback',timestamp:new Date().toISOString(),sessionId:this.sessionId,bestHero:r.bestHero,compatibility:r.compatibility,agreed,realMain});
+  },
+  sendRealMain(realMain,r){
+    this.send({type:'realMain',timestamp:new Date().toISOString(),sessionId:this.sessionId,bestHero:r.bestHero,compatibility:r.compatibility,realMain});
+  },
+  sendCalibration(hero,axes,r){
+    this.send({type:'calibration',timestamp:new Date().toISOString(),sessionId:this.sessionId,hero,axes,testBestHero:r?r.bestHero:'',testCompatibility:r?r.compatibility:''});
+  },
+};
+DataLayer.flushLocal();
 
 // ═══════════════════════════════════════════════════════════════
 //  UI
 // ═══════════════════════════════════════════════════════════════
-let currentQ=0,answers={},lastResult=null;
+let currentQ=0,answers={},lastResult=null,calAnswers={};
 
 function renderQuestion(idx){
-    const q=QUESTIONS[idx],sel=answers[q.id]||0;
-    let opts='';
-    for(let v=1;v<=5;v++)opts+=`<div class="scale-option ${sel===v?'selected':''}" onclick="selectAnswer(${q.id},${v},this)"><div class="scale-option-btn">${v}</div><div class="scale-option-label">${q.labels[v-1]}</div></div>`;
-    document.getElementById('quizArea').innerHTML=`<div class="question-card"><div class="question-number">Вопрос ${idx+1} / ${TOTAL_Q} ${q.type==='cross'?'· проверочный':''}</div><div class="question-text">${q.text}</div><div class="scale-container">${opts}</div></div>`;
-    updateProgress();
-    document.getElementById('btnBack').disabled=(idx===0);
-    document.getElementById('btnNext').disabled=!answers[q.id];
-    document.getElementById('btnNext').textContent=(idx===QUESTIONS.length-1&&answers[q.id])?'Узнать результат →':'Далее →';
+  const q=QUESTIONS[idx],sel=answers[q.id]||0;
+  let opts='';for(let v=1;v<=5;v++)opts+=`<div class="scale-option ${sel===v?'selected':''}" onclick="selectAnswer(${q.id},${v},this)"><div class="scale-option-btn">${v}</div><div class="scale-option-label">${q.labels[v-1]}</div></div>`;
+  document.getElementById('quizArea').innerHTML=`<div class="question-card"><div class="question-number">Вопрос ${idx+1} / ${TOTAL_Q} ${q.type==='cross'?'· проверочный':''}</div><div class="question-text">${q.text}</div><div class="scale-container">${opts}</div></div>`;
+  updateProgress();
+  document.getElementById('btnBack').disabled=(idx===0);
+  document.getElementById('btnNext').disabled=!answers[q.id];
+  document.getElementById('btnNext').textContent=(idx===QUESTIONS.length-1&&answers[q.id])?'Узнать результат →':'Далее →';
 }
 
 function selectAnswer(qId,val,el){
-    answers[qId]=val;
-    el.parentNode.querySelectorAll('.scale-option').forEach(s=>s.classList.remove('selected'));
-    el.classList.add('selected');
-    document.getElementById('btnNext').disabled=false;
-    updateProgress();
-    if(currentQ===QUESTIONS.length-1)document.getElementById('btnNext').textContent='Узнать результат →';
+  answers[qId]=val;el.parentNode.querySelectorAll('.scale-option').forEach(s=>s.classList.remove('selected'));el.classList.add('selected');
+  document.getElementById('btnNext').disabled=false;updateProgress();
+  if(currentQ===QUESTIONS.length-1)document.getElementById('btnNext').textContent='Узнать результат →';
 }
 
 function updateProgress(){
-    const c=Object.keys(answers).length,p=Math.round((c/TOTAL_Q)*100);
-    document.getElementById('progressLabel').textContent=`Вопрос ${currentQ+1} из ${TOTAL_Q}`;
-    document.getElementById('progressPct').textContent=`${p}%`;
-    document.getElementById('progressFill').style.width=`${p}%`;
+  const c=Object.keys(answers).length,p=Math.round((c/TOTAL_Q)*100);
+  document.getElementById('progressLabel').textContent=`Вопрос ${currentQ+1} из ${TOTAL_Q}`;
+  document.getElementById('progressPct').textContent=`${p}%`;
+  document.getElementById('progressFill').style.width=`${p}%`;
 }
 
 function goNext(){if(currentQ<QUESTIONS.length-1){currentQ++;renderQuestion(currentQ);window.scrollTo({top:0,behavior:'smooth'})}else showResults()}
 function goBack(){if(currentQ>0){currentQ--;renderQuestion(currentQ)}}
 
 function showResults(){
-    document.getElementById('quizArea').style.display='none';
-    document.getElementById('navButtons').style.display='none';
-    document.getElementById('progressWrap').style.display='none';
-    const r=Engine.calculate(answers);lastResult=r;
+  document.getElementById('quizArea').style.display='none';
+  document.getElementById('navButtons').style.display='none';
+  document.getElementById('progressWrap').style.display='none';
+  const r=Engine.calculate(answers);lastResult=r;
 
-    // ═══ ОТПРАВКА РЕЗУЛЬТАТОВ КВИЗА В GOOGLE SHEETS ═══
-    sendData({
-        type: 'quiz',
-        bestHero: r.bestHero,
-        compatibility: r.compatibility,
-        confidence: r.confidence.label,
-        confidenceDelta: r.confidence.delta,
-        consistency: Math.round(r.consistency.score * 100),
-        conflictsCount: r.consistency.conflicts.length,
-        answers: JSON.stringify(answers),
-        playerVector: r.playerVector.map(v => +v.toFixed(2)).join(','),
-        top5: r.alternatives.map(a => `${a.name}:${a.compatibility}`).join(','),
-        worst3: r.worst.map(w => `${w.name}:${w.compatibility}`).join(','),
-    });
+  DataLayer.sendQuizResult(r,answers);
 
-    document.getElementById('resultsSubtitle').textContent=`${r.bestHero} · ${r.compatibility}% совпадение`;
+  document.getElementById('resultsSubtitle').textContent=`${r.bestHero} · ${r.compatibility}% совпадение`;
+  const cc=`confidence-${r.confidence.level}`;
+  const cs=r.consistency.score>=.85?'consistency-good':r.consistency.score>=.6?'consistency-ok':'consistency-conflict';
+  const csL=r.consistency.score>=.85?'Высокая':r.consistency.score>=.6?'Средняя':'Низкая';
+  document.getElementById('metaCards').innerHTML=`<div class="meta-card"><div class="meta-card-label">Уверенность</div><div class="meta-card-value ${cc}">${r.confidence.label}</div><div class="meta-card-hint">Δ ${r.confidence.delta.toFixed(2)}</div></div><div class="meta-card"><div class="meta-card-label">Согласованность</div><div class="meta-card-value ${cs}">${csL} (${Math.round(r.consistency.score*100)}%)</div><div class="meta-card-hint">${r.consistency.conflicts.length} конфликт(ов)</div></div><div class="meta-card"><div class="meta-card-label">Совпадение</div><div class="meta-card-value" style="color:var(--gold)">${r.compatibility}%</div><div class="meta-card-hint">с ${r.bestHero}</div></div>`;
 
-    const cc=`confidence-${r.confidence.level}`;
-    const cs=r.consistency.score>=.85?'consistency-good':r.consistency.score>=.6?'consistency-ok':'consistency-conflict';
-    const csL=r.consistency.score>=.85?'Высокая':r.consistency.score>=.6?'Средняя':'Низкая';
+  const cEl=document.getElementById('conflictsSection');
+  if(r.consistency.conflicts.length>0){cEl.style.display='block';document.getElementById('conflictsList').innerHTML=r.consistency.conflicts.map(c=>`<div class="conflict-item"><span>⚠</span><span class="conflict-axis">${c.axisName}</span><span class="conflict-detail">Основной: ${c.primary} → Проверочный: ${c.cross} (Δ${c.diff})</span></div>`).join('')}else cEl.style.display='none';
 
-    document.getElementById('metaCards').innerHTML=`
-        <div class="meta-card"><div class="meta-card-label">Уверенность</div><div class="meta-card-value ${cc}">${r.confidence.label}</div><div class="meta-card-hint">Δ ${r.confidence.delta.toFixed(2)}</div></div>
-        <div class="meta-card"><div class="meta-card-label">Согласованность</div><div class="meta-card-value ${cs}">${csL} (${Math.round(r.consistency.score*100)}%)</div><div class="meta-card-hint">${r.consistency.conflicts.length} конфликт(ов)</div></div>
-        <div class="meta-card"><div class="meta-card-label">Совпадение</div><div class="meta-card-value" style="color:var(--gold)">${r.compatibility}%</div><div class="meta-card-hint">с ${r.bestHero}</div></div>`;
+  document.getElementById('profileBars').innerHTML=r.playerVector.map((v,i)=>{const ic=r.conflictedAxes.includes(i);const wl=CONFIG.weights[i]!==1?`×${CONFIG.weights[i]}`:'';return`<div class="profile-axis"><span class="axis-name">${AXES_RU[i]}</span><div class="axis-bar-bg"><div class="axis-bar-fill ${ic?'conflicted':''}" style="width:${(v/5)*100}%"></div></div><span class="axis-value">${v.toFixed(1)}</span><span class="axis-weight">${wl}</span></div>`}).join('');
 
-    const cEl=document.getElementById('conflictsSection');
-    if(r.consistency.conflicts.length>0){cEl.style.display='block';document.getElementById('conflictsList').innerHTML=r.consistency.conflicts.map(c=>`<div class="conflict-item"><span class="conflict-icon">⚠</span><span class="conflict-axis">${c.axisName}</span><span class="conflict-detail">Основной: ${c.primary} → Проверочный: ${c.cross} (Δ${c.diff})</span></div>`).join('')}else cEl.style.display='none';
+  document.getElementById('heroCards').innerHTML=r.alternatives.map((h,i)=>{const ex=h.explain;const sum=`✅ ${ex.matchCount}  🟡 ${ex.closeCount}  ❌ ${ex.offCount}`;const rows=ex.axes.map(a=>`<div class="explain-row"><span class="explain-icon">${a.icon}</span><span class="explain-axis-name">${a.name}</span><span class="explain-values">ты: <span class="explain-player">${a.playerVal.toFixed(1)}</span> <span style="color:var(--text-muted)">│</span> герой: <span class="explain-hero">${a.heroVal}</span></span><span class="explain-diff">Δ${a.diff.toFixed(1)}</span></div>`).join('');return`<div class="hero-entry ${i===0?'top-pick':''}"><div class="hero-card"><div class="hero-rank">${i+1}</div><div class="hero-info"><div class="hero-name">${h.name}</div><div class="hero-match-bar-bg"><div class="hero-match-bar-fill" style="width:${h.compatibility}%"></div></div></div><div class="hero-pct">${h.compatibility}%</div></div><div class="hero-explain-area"><button class="hero-explain-toggle" onclick="toggleExplain('ex-${i}',this)">▸ Почему ${h.name}?</button><div class="hero-explain" id="ex-${i}" style="display:none"><div class="explain-summary">${sum}</div>${rows}</div></div></div>`}).join('');
 
-    document.getElementById('profileBars').innerHTML=r.playerVector.map((v,i)=>{
-        const ic=r.conflictedAxes.includes(i);const wl=CONFIG.weights[i]!==1?`×${CONFIG.weights[i]}`:'';
-        return`<div class="profile-axis"><span class="axis-name">${AXES_RU[i]}</span><div class="axis-bar-bg"><div class="axis-bar-fill ${ic?'conflicted':''}" style="width:${(v/5)*100}%"></div></div><span class="axis-value">${v.toFixed(1)}</span><span class="axis-weight">${wl}</span></div>`;
-    }).join('');
+  document.getElementById('worstHeroes').innerHTML=r.worst.map(h=>`<div class="worst-hero"><span>✗ ${h.name}</span><span>${h.compatibility}%</span></div>`).join('');
 
-    document.getElementById('heroCards').innerHTML=r.alternatives.map((h,i)=>{
-        const ex=h.explain;const sum=`✅ ${ex.matchCount} 🟡 ${ex.closeCount} ❌ ${ex.offCount}`;
-        const rows=ex.axes.map(a=>`<div class="explain-row"><span class="explain-icon">${a.icon}</span><span class="explain-axis-name">${a.name}</span><span class="explain-values">ты: <span class="explain-player">${a.playerVal.toFixed(1)}</span> <span style="color:var(--text-muted)">│</span> герой: <span class="explain-hero">${a.heroVal}</span></span><span class="explain-diff">Δ${a.diff.toFixed(1)}</span></div>`).join('');
-        return`<div class="hero-entry ${i===0?'top-pick':''}"><div class="hero-card"><div class="hero-rank">${i+1}</div><div class="hero-info"><div class="hero-name">${h.name}</div><div class="hero-match-bar-bg"><div class="hero-match-bar-fill" style="width:${h.compatibility}%"></div></div></div><div class="hero-pct">${h.compatibility}%</div></div><div class="hero-explain-area"><button class="hero-explain-toggle" onclick="toggleExplain('ex-${i}',this)">▸ Почему ${h.name}?</button><div class="hero-explain" id="ex-${i}" style="display:none"><div class="explain-summary">${sum}</div>${rows}</div></div></div>`;
-    }).join('');
+  const heroNames=HERO_DATA.map(h=>h.name).sort();
+  document.getElementById('realMainSelect').innerHTML='<option value="">— выбери —</option>'+heroNames.map(n=>`<option value="${n}">${n}</option>`).join('');
+  document.getElementById('calHeroSelect').innerHTML='<option value="">— выбери своего мейна —</option>'+heroNames.map(n=>`<option value="${n}">${n}</option>`).join('');
 
-    document.getElementById('worstHeroes').innerHTML=r.worst.map(h=>`<div class="worst-hero"><span>✗ ${h.name}</span><span>${h.compatibility}%</span></div>`).join('');
+  document.getElementById('realMainSelect').onchange=function(){if(this.value&&lastResult)DataLayer.sendRealMain(this.value,lastResult)};
 
-    const heroNames=HERO_DATA.map(h=>h.name).sort();
-    document.getElementById('realMainSelect').innerHTML='<option value="">— выбери —</option>'+heroNames.map(n=>`<option value="${n}">${n}</option>`).join('');
-    document.getElementById('calHeroSelect').innerHTML='<option value="">— выбери своего мейна —</option>'+heroNames.map(n=>`<option value="${n}">${n}</option>`).join('');
-    renderCalAxes();
-
-    document.getElementById('debugLog').textContent=r.log;
-    document.getElementById('results').style.display='block';
-    window.scrollTo({top:0,behavior:'smooth'});
+  renderCalAxes();
+  document.getElementById('calSubmitBtn').disabled=false;
+  document.getElementById('calSubmitBtn').style.opacity='1';
+  document.getElementById('calMsg').textContent='';
+  document.getElementById('debugLog').textContent=r.log;
+  document.getElementById('results').style.display='block';
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 
 function toggleExplain(id,btn){const el=document.getElementById(id);const v=el.style.display!=='none';el.style.display=v?'none':'block';btn.textContent=btn.textContent.replace(v?'▾':'▸',v?'▸':'▾')}
 
-// ═══════════════════════════════════════════════════════════════
-//  CALIBRATION FORM
-// ═══════════════════════════════════════════════════════════════
-let calAnswers={};
-
 function renderCalAxes(){
-    let html='';
-    for(let i=0;i<NUM_AXES;i++){
-        let btns='';
-        for(let v=1;v<=5;v++){
-            btns+=`<div class="cal-btn ${calAnswers[i]===v?'selected':''}" onclick="calSelect(${i},${v},this)">${v}</div>`;
-        }
-        html+=`<div class="cal-axis-row">
-            <span class="cal-axis-name">${AXES_RU[i]}</span>
-            <div class="cal-btns">${btns}</div>
-            <div class="cal-labels"><span>${AXES_LOW[i]}</span><span>${AXES_HIGH[i]}</span></div>
-        </div>`;
-    }
-    document.getElementById('calAxes').innerHTML=html;
+  let html='';
+  for(let i=0;i<NUM_AXES;i++){
+    let btns='';for(let v=1;v<=5;v++)btns+=`<div class="cal-btn ${calAnswers[i]===v?'selected':''}" onclick="calSelect(${i},${v},this)">${v}</div>`;
+    html+=`<div class="cal-axis-row"><span class="cal-axis-name">${AXES_RU[i]}</span><div class="cal-btns">${btns}</div><div class="cal-labels"><span>${AXES_LOW[i]}</span><span>${AXES_HIGH[i]}</span></div></div>`;
+  }
+  document.getElementById('calAxes').innerHTML=html;
 }
 
-function calSelect(axis,val,el){
-    calAnswers[axis]=val;
-    el.parentNode.querySelectorAll('.cal-btn').forEach(b=>b.classList.remove('selected'));
-    el.classList.add('selected');
-}
+function calSelect(axis,val,el){calAnswers[axis]=val;el.parentNode.querySelectorAll('.cal-btn').forEach(b=>b.classList.remove('selected'));el.classList.add('selected')}
 
 function submitCalibration(){
-    const hero=document.getElementById('calHeroSelect').value;
-    if(!hero){document.getElementById('calMsg').textContent='Выбери героя!';return}
-    const filled=Object.keys(calAnswers).length;
-    if(filled<NUM_AXES){document.getElementById('calMsg').textContent=`Заполни все ${NUM_AXES} шкал! (заполнено: ${filled})`;return}
-
-    const axesData = {};
-    AXES_KEYS.forEach((k,i) => axesData[k] = calAnswers[i]);
-
-    // ═══ ОТПРАВКА КАЛИБРОВКИ В GOOGLE SHEETS ═══
-    sendData({
-        type: 'calibration',
-        hero: hero,
-        axes: JSON.stringify(axesData),
-        axesReadable: AXES_KEYS.map((k,i) => `${k}:${calAnswers[i]}`).join(','),
-        testBestHero: lastResult?.bestHero || '',
-        testCompatibility: lastResult?.compatibility || '',
-    });
-
-    document.getElementById('calMsg').textContent='✓ Спасибо! Данные отправлены.';
-    document.getElementById('calMsg').style.color='var(--teal-light)';
+  const hero=document.getElementById('calHeroSelect').value;
+  if(!hero){document.getElementById('calMsg').textContent='Выбери героя!';document.getElementById('calMsg').style.color='var(--red-light)';return}
+  const filled=Object.keys(calAnswers).length;
+  if(filled<NUM_AXES){document.getElementById('calMsg').textContent=`Заполни все ${NUM_AXES} шкал! (${filled}/${NUM_AXES})`;document.getElementById('calMsg').style.color='var(--red-light)';return}
+  const axes={};AXES_KEYS.forEach((k,i)=>axes[k]=calAnswers[i]);
+  DataLayer.sendCalibration(hero,axes,lastResult);
+  document.getElementById('calMsg').textContent='✓ Спасибо! Данные отправлены.';
+  document.getElementById('calMsg').style.color='var(--teal-light)';
+  document.getElementById('calSubmitBtn').disabled=true;
+  document.getElementById('calSubmitBtn').style.opacity='.3';
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  UTILITIES
-// ═══════════════════════════════════════════════════════════════
 function setFeedback(btn,agreed){
-    document.querySelectorAll('.fb-btn').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-
-    // ═══ ОТПРАВКА ФИДБЭКА В GOOGLE SHEETS ═══
-    sendData({
-        type: 'feedback',
-        bestHero: lastResult?.bestHero || '',
-        compatibility: lastResult?.compatibility || '',
-        agreed: agreed,
-        realMain: document.getElementById('realMainSelect').value,
-    });
+  document.querySelectorAll('.fb-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  if(lastResult)DataLayer.sendFeedback(agreed,document.getElementById('realMainSelect').value,lastResult);
 }
-
-// Отслеживаем выбор реального мейна отдельно
-document.addEventListener('change', function(e) {
-    if (e.target.id === 'realMainSelect' && e.target.value) {
-        sendData({
-            type: 'realMain',
-            bestHero: lastResult?.bestHero || '',
-            compatibility: lastResult?.compatibility || '',
-            realMain: e.target.value,
-        });
-    }
-});
 
 function exportProfile(){
-    if(!lastResult)return;const r=lastResult;
-    const l=[`◆ DEADLOCK — Результат`,``,`Герой: ${r.bestHero} (${r.compatibility}%)`,`Уверенность: ${r.confidence.label}`,`Согласованность: ${Math.round(r.consistency.score*100)}%`,``,`Профиль:`,...AXES_RU.map((n,i)=>`  ${n}: ${r.playerVector[i].toFixed(1)}/5`),``,`Топ-5:`,...r.alternatives.map((h,i)=>`  ${i+1}. ${h.name} — ${h.compatibility}%`)];
-    navigator.clipboard.writeText(l.join('\n')).then(()=>{const b=document.querySelector('.export-btn');b.textContent='✓ Скопировано';setTimeout(()=>b.textContent='📋 Скопировать',2000)}).catch(()=>alert(l.join('\n')));
+  if(!lastResult)return;const r=lastResult;
+  const l=[`◆ DEADLOCK — Результат`,``,`Герой: ${r.bestHero} (${r.compatibility}%)`,`Уверенность: ${r.confidence.label}`,`Согласованность: ${Math.round(r.consistency.score*100)}%`,``,`Профиль:`,...AXES_RU.map((n,i)=>`  ${n}: ${r.playerVector[i].toFixed(1)}/5`),``,`Топ-5:`,...r.alternatives.map((h,i)=>`  ${i+1}. ${h.name} — ${h.compatibility}%`)];
+  navigator.clipboard.writeText(l.join('\n')).then(()=>{const b=document.querySelector('.export-btn');b.textContent='✓ Скопировано';setTimeout(()=>b.textContent='📋 Скопировать',2000)}).catch(()=>alert(l.join('\n')));
 }
 
 function restart(){
-    answers={};currentQ=0;lastResult=null;calAnswers={};
-    document.getElementById('results').style.display='none';
-    document.getElementById('quizArea').style.display='block';
-    document.getElementById('navButtons').style.display='flex';
-    document.getElementById('progressWrap').style.display='block';
-    renderQuestion(0);window.scrollTo({top:0,behavior:'smooth'});
+  answers={};currentQ=0;lastResult=null;calAnswers={};
+  DataLayer.sessionId=crypto.randomUUID?crypto.randomUUID():'s_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);
+  document.getElementById('results').style.display='none';
+  document.getElementById('quizArea').style.display='block';
+  document.getElementById('navButtons').style.display='flex';
+  document.getElementById('progressWrap').style.display='block';
+  renderQuestion(0);window.scrollTo({top:0,behavior:'smooth'});
 }
 
 renderQuestion(0);
